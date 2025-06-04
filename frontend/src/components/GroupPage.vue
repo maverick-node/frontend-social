@@ -536,7 +536,7 @@ export default {
     };
   },
   beforeRouteEnter(to, from, next) {
-    fetch(`${import.meta.env.VITE_API_URL}/api/info`, {
+    fetch(`https://back-production-bb9b.up.railway.app//api/info`, {
       method: "GET",
       credentials: "include",
     })
@@ -569,7 +569,7 @@ export default {
     async fetchGroupDetails(groupId) {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/getgroups?id=${groupId}`,
+          `https://back-production-bb9b.up.railway.app//api/getgroups?id=${groupId}`,
           {
             method: "GET",
             credentials: "include",
@@ -612,7 +612,7 @@ export default {
     },
     async fetchNotifications() {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notifications`, {
+        const res = await fetch(`https://back-production-bb9b.up.railway.app//api/notifications`, {
           method: "GET",
           credentials: "include",
         });
@@ -648,7 +648,7 @@ export default {
         // Set a timeout to mark as read after 3 seconds
         setTimeout(async () => {
           try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/markasread`, {
+            const res = await fetch(`https://back-production-bb9b.up.railway.app//api/markasread`, {
               method: 'POST',
               credentials: 'include',
               headers: {
@@ -673,7 +673,7 @@ export default {
     async checkMembership(groupId) {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/checkmem?group_id=${groupId}`,
+          `https://back-production-bb9b.up.railway.app//api/checkmem?group_id=${groupId}`,
           {
             method: "GET",
             credentials: "include",
@@ -716,7 +716,7 @@ export default {
             this.chatMessages = data
               .map(msg => ({
                 ...msg,
-                authorAvatar: msg.avatar ? `${import.meta.env.VITE_API_URL}/uploads/${msg.avatar}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.username}`,
+                authorAvatar: msg.avatar ? `https://back-production-bb9b.up.railway.app//uploads/${msg.avatar}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.username}`,
                 created_at: new Date(msg.created_at)
               }))
               .sort((a, b) => a.created_at - b.created_at);
@@ -734,7 +734,7 @@ export default {
           if (data && data.username && data.content) {
             this.chatMessages.push({
               ...data,
-              authorAvatar: data.avatar ? `${import.meta.env.VITE_API_URL}/uploads/${data.avatar}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.username}`,
+              authorAvatar: data.avatar ? `https://back-production-bb9b.up.railway.app//uploads/${data.avatar}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.username}`,
               created_at: new Date(data.created_at)
             });
 
@@ -795,7 +795,7 @@ export default {
     async leaveGroup() {
       try {
         // Get current user ID from the auth API
-        const userRes = await fetch(`${import.meta.env.VITE_API_URL}/api/info`, {
+        const userRes = await fetch(`https://back-production-bb9b.up.railway.app//api/info`, {
           method: "GET",
           credentials: "include",
         });
@@ -808,7 +808,7 @@ export default {
         const userData = await userRes.json();
         
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/removememberfromgroup`,
+          `https://back-production-bb9b.up.railway.app//api/removememberfromgroup`,
           {
             method: "POST",
             credentials: "include",
@@ -868,7 +868,7 @@ export default {
         }
 
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/events/add?group_id=${this.$route.params.id}`,
+          `https://back-production-bb9b.up.railway.app//api/events/add?group_id=${this.$route.params.id}`,
           {
             method: "POST",
             credentials: "include",
@@ -904,7 +904,7 @@ export default {
     async respondToEvent(eventId, response) {
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/events/join?event_id=${eventId}&response=${response}`,
+          `https://back-production-bb9b.up.railway.app//api/events/join?event_id=${eventId}&response=${response}`,
           {
             method: "POST",
             credentials: "include",
@@ -946,7 +946,7 @@ export default {
     async fetchEvents(group_id) {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/events?id=${group_id}`,
+          `https://back-production-bb9b.up.railway.app//api/events?id=${group_id}`,
           {
             credentials: "include",
           }
@@ -989,7 +989,7 @@ export default {
     async fetchPosts(group_id) {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/groupposts?group_id=${group_id}`,
+          `https://back-production-bb9b.up.railway.app//api/groupposts?group_id=${group_id}`,
           {
             credentials: "include",
           }
@@ -1026,7 +1026,7 @@ export default {
       const groupId = this.$route.params.id;
 
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/groupposts/add?group_id=${groupId}`, {
+        const response = await fetch(`https://back-production-bb9b.up.railway.app//api/groupposts/add?group_id=${groupId}`, {
           method: "POST",
           credentials: "include",
           headers: {
@@ -1078,7 +1078,7 @@ export default {
         formData.append("image", post.commentImage);
       }
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/groupcomments/add`, {
+        const res = await fetch(`https://back-production-bb9b.up.railway.app//api/groupcomments/add`, {
           method: "POST",
           credentials: "include",
           body: formData,
@@ -1119,7 +1119,7 @@ export default {
     async fetchComments(post) {
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/groupcomments?group_post_id=${post.id}`,
+          `https://back-production-bb9b.up.railway.app//api/groupcomments?group_post_id=${post.id}`,
           {
             method: "GET",
             credentials: "include",
@@ -1130,7 +1130,7 @@ export default {
           post.comments = data.map((comment) => ({
             ...comment,
             authorAvatar: comment.avatar
-              ? `${import.meta.env.VITE_API_URL}/uploads/${comment.avatar}`
+              ? `https://back-production-bb9b.up.railway.app//uploads/${comment.avatar}`
               : `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.author}`,
             created_at: comment.creation_date,
             image: comment.image
@@ -1164,7 +1164,7 @@ export default {
       this.$router.push('/mygroups');
     },
     logout() {
-      fetch(`${import.meta.env.VITE_API_URL}/api/logout`, {
+      fetch(`https://back-production-bb9b.up.railway.app//api/logout`, {
         method: 'POST',
         credentials: 'include'
       })
@@ -1191,7 +1191,7 @@ export default {
 
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/GetInvitations?group_id=${this.group.id}`,
+          `https://back-production-bb9b.up.railway.app//api/GetInvitations?group_id=${this.group.id}`,
           {
             credentials: "include",
           }
@@ -1213,8 +1213,8 @@ export default {
     async handleMemberRequest(userId, action) {
       try {
         const endpoint = action === 'accept'
-          ? `${import.meta.env.VITE_API_URL}/api/acceptgroupmember`
-          : `${import.meta.env.VITE_API_URL}/api/removememberfromgroup`;
+          ? `https://back-production-bb9b.up.railway.app//api/acceptgroupmember`
+          : `https://back-production-bb9b.up.railway.app//api/removememberfromgroup`;
 
         const response = await fetch(endpoint, {
           method: 'POST',
@@ -1249,8 +1249,8 @@ export default {
     async handleInvitation(action) {
       try {
         const endpoint = action === 'accept'
-          ? `${import.meta.env.VITE_API_URL}/api/acceptgroupinvite`
-          : `${import.meta.env.VITE_API_URL}/api/declinegroupinvite`;
+          ? `https://back-production-bb9b.up.railway.app//api/acceptgroupinvite`
+          : `https://back-production-bb9b.up.railway.app//api/declinegroupinvite`;
 
         const response = await fetch(endpoint, {
           method: 'POST',
@@ -1290,7 +1290,7 @@ export default {
     },
     async fetchAllUsers() {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/allusers`, {
+        const response = await fetch(`https://back-production-bb9b.up.railway.app//api/allusers`, {
           credentials: "include",
         });
         if (response.ok) {
@@ -1301,7 +1301,7 @@ export default {
             id: user.id,
             username: user.username,
             avatar: user.avatar
-              ? `${import.meta.env.VITE_API_URL}/uploads/${user.avatar}`
+              ? `https://back-production-bb9b.up.railway.app//uploads/${user.avatar}`
               : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`,
             invited: false
           }));
@@ -1321,7 +1321,7 @@ export default {
 
       // First, get all member statuses for this group
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/groupmembers/status?group_id=${this.group.id}`, {
+        const response = await fetch(`https://back-production-bb9b.up.railway.app//api/groupmembers/status?group_id=${this.group.id}`, {
           credentials: "include",
         });
         if (response.ok) {
@@ -1353,7 +1353,7 @@ export default {
 
     async inviteUser(user) {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/addmembertogroup`, {
+        const response = await fetch(`https://back-production-bb9b.up.railway.app//api/addmembertogroup`, {
           method: "POST",
           credentials: "include",
           headers: {
@@ -1375,7 +1375,7 @@ export default {
 
           // Create notification for the invited user
           try {
-            await fetch(`${import.meta.env.VITE_API_URL}/api/notifications`, {
+            await fetch(`https://back-production-bb9b.up.railway.app//api/notifications`, {
               method: "POST",
               credentials: "include",
               headers: {
@@ -1404,7 +1404,7 @@ export default {
 
     async fetchGroupMembers() {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/groupmembers?group_id=${this.group.id}`, {
+        const response = await fetch(`https://back-production-bb9b.up.railway.app//api/groupmembers?group_id=${this.group.id}`, {
           credentials: "include",
         });
         if (response.ok) {

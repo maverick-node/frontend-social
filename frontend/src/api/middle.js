@@ -1,6 +1,6 @@
 export async function CheckLogin() {
         try {
-          const response = await fetch(`${import.meta.env.VITE_API_URL}/middle`, {
+          const response = await fetch(`https://back-production-bb9b.up.railway.app//middle`, {
             method: 'GET',
             credentials: 'include',
           });

@@ -401,7 +401,7 @@ export default {
     };
   },
   beforeRouteEnter(to, from, next) {
-    fetch(`${import.meta.env.VITE_API_URL}/api/info`, {
+    fetch(`https://back-production-bb9b.up.railway.app//api/info`, {
       method: "GET",
       credentials: "include",
     })
@@ -419,7 +419,7 @@ export default {
   async created() {
     this.$router.push('/home');
     try {
-      const userRes = await fetch(`${import.meta.env.VITE_API_URL}/api/info`, {
+      const userRes = await fetch(`https://back-production-bb9b.up.railway.app//api/info`, {
         method: "GET",
         credentials: "include",
       });
@@ -431,7 +431,7 @@ export default {
       this.user.username = userData.Username.toLowerCase();
 
       if (userData.Avatar) {
-        this.user.avatar = `${import.meta.env.VITE_API_URL}/uploads/${userData.Avatar}`;
+        this.user.avatar = `https://back-production-bb9b.up.railway.app//uploads/${userData.Avatar}`;
       } else {
         this.user.avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.Username}`;
       }
@@ -451,7 +451,7 @@ export default {
   methods: {
     async fetchAllowedUsers() {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/postsprivacy`, {
+        const res = await fetch(`https://back-production-bb9b.up.railway.app//api/postsprivacy`, {
           method: "GET",
           credentials: "include",
         });
@@ -480,7 +480,7 @@ export default {
     async fetchAllUsers() {
       try {
         // Fetch all users for follow list
-        const allUsersRes = await fetch(`${import.meta.env.VITE_API_URL}/api/allusers`, {
+        const allUsersRes = await fetch(`https://back-production-bb9b.up.railway.app//api/allusers`, {
           method: "GET",
           credentials: "include",
         });
@@ -494,7 +494,7 @@ export default {
             name: user.fullname,
             username: user.username,
             avatar: user.avatar
-              ? `${import.meta.env.VITE_API_URL}/uploads/${user.avatar}`
+              ? `https://back-production-bb9b.up.railway.app//uploads/${user.avatar}`
               : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`,
             followed: user.followed || false, // Track if the user is followed
           }));
@@ -508,7 +508,7 @@ export default {
         }
 
         // Fetch chat users from openchat endpoint
-        const chatUsersRes = await fetch(`${import.meta.env.VITE_API_URL}/api/openchat`, {
+        const chatUsersRes = await fetch(`https://back-production-bb9b.up.railway.app//api/openchat`, {
           method: "GET",
           credentials: "include",
         });
@@ -524,7 +524,7 @@ export default {
               name: user.username,
               messages: [],
               avatar:   user.avatar 
-                ? `${import.meta.env.VITE_API_URL}/uploads/${user.avatar}`
+                ? `https://back-production-bb9b.up.railway.app//uploads/${user.avatar}`
                 : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`,
             }));
             
@@ -575,7 +575,7 @@ if (data.type == "message" ){
     },
     async fetchPosts() {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/getposts`, {
+        const res = await fetch(`https://back-production-bb9b.up.railway.app//api/getposts`, {
           method: "GET",
           credentials: "include",
         });
@@ -591,7 +591,7 @@ if (data.type == "message" ){
           this.posts = data.map((post) => ({
             ...post,
             authorAvatar: post.Avatar
-              ? `${import.meta.env.VITE_API_URL}/uploads/${post.Avatar}`
+              ? `https://back-production-bb9b.up.railway.app//uploads/${post.Avatar}`
               : `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.Author}`,
             Image: post.Image, // Already a full URL if backend does it as above
             comments: [],
@@ -611,7 +611,7 @@ if (data.type == "message" ){
     async fetchComments(post) {
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/getcomments?post_id=${post.Id}`,
+          `https://back-production-bb9b.up.railway.app//api/getcomments?post_id=${post.Id}`,
           {
             method: "GET",
             credentials: "include",
@@ -626,9 +626,9 @@ if (data.type == "message" ){
           post.comments = data.map((comment) => ({
             ...comment,
             avatar: comment.avatar
-              ? `${import.meta.env.VITE_API_URL}/uploads/${comment.avatar}`
+              ? `https://back-production-bb9b.up.railway.app//uploads/${comment.avatar}`
               : `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.author}`,
-            image: comment.image ? `${import.meta.env.VITE_API_URL}/uploads/${comment.image}` : null,
+            image: comment.image ? `https://back-production-bb9b.up.railway.app//uploads/${comment.image}` : null,
           }));
 
         } else {
@@ -668,7 +668,7 @@ if (data.type == "message" ){
       }
 
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/addcomments`, {
+        const res = await fetch(`https://back-production-bb9b.up.railway.app//api/addcomments`, {
           method: "POST",
           credentials: "include",
           body: formData
@@ -728,7 +728,7 @@ if (data.type == "message" ){
           formData.append("image", this.image);
         }
 
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/posts`, {
+        const res = await fetch(`https://back-production-bb9b.up.railway.app//api/posts`, {
           method: "POST",
           credentials: "include",
           body: formData
@@ -759,7 +759,7 @@ if (data.type == "message" ){
       }
     },
     logout() {
-      fetch(`${import.meta.env.VITE_API_URL}/api/auth/logout`, {
+      fetch(`https://back-production-bb9b.up.railway.app//api/auth/logout`, {
         method: "POST",
         credentials: "include",
       })
@@ -789,7 +789,7 @@ if (data.type == "message" ){
         }
 
         // Get current user ID from the auth API
-        const userRes = await fetch(`${import.meta.env.VITE_API_URL}/api/info`, {
+        const userRes = await fetch(`https://back-production-bb9b.up.railway.app//api/info`, {
           method: "GET",
           credentials: "include",
         });
@@ -806,27 +806,27 @@ if (data.type == "message" ){
         let requestBody = {};
 
         if (group.member_status === 'accepted') {
-          endpoint = `${import.meta.env.VITE_API_URL}/api/removememberfromgroup`;
+          endpoint = `https://back-production-bb9b.up.railway.app//api/removememberfromgroup`;
           action = "leave";
           requestBody = {
             group_id: group.id,
             user_id: userData.id  // Include user ID for leave operation
           };
         } else if (group.member_status === 'pending') {
-          endpoint = `${import.meta.env.VITE_API_URL}/api/cancelgrouprequest`;
+          endpoint = `https://back-production-bb9b.up.railway.app//api/cancelgrouprequest`;
           action = "cancel request from";
           requestBody = {
             group_id: group.id
           };
         } else if (group.member_status === 'invited') {
-          endpoint = `${import.meta.env.VITE_API_URL}/api/acceptgroupinvite`;
+          endpoint = `https://back-production-bb9b.up.railway.app//api/acceptgroupinvite`;
           action = "accept invitation to";
           requestBody = {
             group_id: group.id,
             action: 'accept'
           };
         } else {
-          endpoint = `${import.meta.env.VITE_API_URL}/api/requesttojoingroup`;
+          endpoint = `https://back-production-bb9b.up.railway.app//api/requesttojoingroup`;
           action = "join";
           requestBody = {
             group_id: group.id
@@ -893,7 +893,7 @@ if (data.type == "message" ){
       
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/getmessages?sender=${this.user.username}&receiver=${user}`,
+          `https://back-production-bb9b.up.railway.app//api/getmessages?sender=${this.user.username}&receiver=${user}`,
           {
             method: "GET",
             credentials: "include",
@@ -995,7 +995,7 @@ if (data.type == "message" ){
     },
     async fetchGroups() {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/getgroups`, {
+        const response = await fetch(`https://back-production-bb9b.up.railway.app//api/getgroups`, {
           method: "GET",
           credentials: "include",
         });
@@ -1036,7 +1036,7 @@ if (data.type == "message" ){
           return;
         }
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/ismember?group_id=${groupId}`,
+          `https://back-production-bb9b.up.railway.app//api/ismember?group_id=${groupId}`,
           {
             method: "GET",
             credentials: "include",
@@ -1066,7 +1066,7 @@ if (data.type == "message" ){
     async createGroup() {
       try {
         // Get current user ID from the auth API
-        const userRes = await fetch(`${import.meta.env.VITE_API_URL}/api/info`, {
+        const userRes = await fetch(`https://back-production-bb9b.up.railway.app//api/info`, {
           method: "GET",
           credentials: "include",
         });
@@ -1079,7 +1079,7 @@ if (data.type == "message" ){
         const userData = await userRes.json();
         this.newGroup.creator_id = userData.id; // Use the correct user ID
 
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/creategroups`, {
+        const response = await fetch(`https://back-production-bb9b.up.railway.app//api/creategroups`, {
           method: "POST",
           credentials: "include",
           headers: {
@@ -1117,7 +1117,7 @@ if (data.type == "message" ){
     },
     async fetchPostsPrv() {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/postsprv`, {
+        const res = await fetch(`https://back-production-bb9b.up.railway.app//api/postsprv`, {
           method: "GET",
           credentials: "include",
         });
@@ -1166,7 +1166,7 @@ if (data.type == "message" ){
     },
     async fetchNotifications() {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notifications`, {
+        const res = await fetch(`https://back-production-bb9b.up.railway.app//api/notifications`, {
           method: "GET",
           credentials: "include",
         });
@@ -1204,7 +1204,7 @@ if (data.type == "message" ){
         // Set a timeout to mark as read after 3 seconds
         setTimeout(async () => {
           try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/markasread`, {
+            const res = await fetch(`https://back-production-bb9b.up.railway.app//api/markasread`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
@@ -1290,7 +1290,7 @@ if (data.type == "message" ){
     },
     async fetchChatUsers() {
       try {
-        const chatUsersRes = await fetch(`${import.meta.env.VITE_API_URL}/api/openchat`, {
+        const chatUsersRes = await fetch(`https://back-production-bb9b.up.railway.app//api/openchat`, {
           method: "GET",
           credentials: "include",
         });
@@ -1306,7 +1306,7 @@ if (data.type == "message" ){
               name: user.username,
               messages: [],
               avatar: user.avatar 
-                ? `${import.meta.env.VITE_API_URL}/uploads/${user.avatar}`
+                ? `https://back-production-bb9b.up.railway.app//uploads/${user.avatar}`
                 : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`,
             }));
           }

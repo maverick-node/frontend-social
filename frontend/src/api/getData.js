@@ -1,5 +1,5 @@
 export async function getData() {
-    return fetch(`${import.meta.env.VITE_API_URL}/api/info`, {
+    return fetch(`https://back-production-bb9b.up.railway.app//api/info`, {
         method: 'GET',
         credentials: 'include',
     })
