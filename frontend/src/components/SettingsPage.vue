@@ -130,7 +130,7 @@ export default {
   },
 
   beforeRouteEnter(to, from, next) {
-    fetch(`https://back-production-bb9b.up.railway.app//api/info`, {
+    fetch(`https://back-production-bb9b.up.railway.app/api/info`, {
       method: "GET",
       credentials: "include",
     })
@@ -149,7 +149,7 @@ export default {
   methods: {
     async updatePrivacy() {
       try {
-        const res = await fetch(`https://back-production-bb9b.up.railway.app//api/updateprivacy`, {
+        const res = await fetch(`https://back-production-bb9b.up.railway.app/api/updateprivacy`, {
           method: 'POST',
           credentials: 'include',
           body: JSON.stringify({
@@ -168,7 +168,7 @@ export default {
     },
     async fetchInvitations() {
       try {
-        const res = await fetch(`https://back-production-bb9b.up.railway.app//api/getinvitationsfollow`, {
+        const res = await fetch(`https://back-production-bb9b.up.railway.app/api/getinvitationsfollow`, {
           method: 'GET',
           credentials: 'include'
         });
@@ -181,7 +181,7 @@ export default {
     },
     async acceptInvitation(invitationId) {
       try {
-        const res = await fetch(`https://back-production-bb9b.up.railway.app//api/accepteinvi`, {
+        const res = await fetch(`https://back-production-bb9b.up.railway.app/api/accepteinvi`, {
           method: 'POST',
           credentials: 'include',
           body: JSON.stringify({
@@ -199,7 +199,7 @@ export default {
 
     async rejectInvitation(invitationId) {
       try {
-        const res = await fetch(`https://back-production-bb9b.up.railway.app//api/followers?action=rejectInvitation&profileUser=${invitationId}`, {
+        const res = await fetch(`https://back-production-bb9b.up.railway.app/api/followers?action=rejectInvitation&profileUser=${invitationId}`, {
           method: 'POST',
           credentials: 'include'
         });
@@ -211,7 +211,7 @@ export default {
       }
     },
     async checkprivacy() {
-      const res = await fetch(`https://back-production-bb9b.up.railway.app//api/checkmyprivacy`, {
+      const res = await fetch(`https://back-production-bb9b.up.railway.app/api/checkmyprivacy`, {
         credentials: 'include',
       })
       const data = await res.json()
@@ -224,7 +224,7 @@ export default {
       }
     },
     logout() {
-      fetch(`https://back-production-bb9b.up.railway.app//api/auth/logout`, {
+      fetch(`https://back-production-bb9b.up.railway.app/api/auth/logout`, {
         method: 'POST',
         credentials: 'include'
       })
@@ -253,7 +253,7 @@ export default {
     },
     async fetchNotifications() {
       try {
-        const res = await fetch(`https://back-production-bb9b.up.railway.app//api/notifications`, {
+        const res = await fetch(`https://back-production-bb9b.up.railway.app/api/notifications`, {
           method: 'GET',
           credentials: 'include'
         });
@@ -277,7 +277,7 @@ export default {
         // Set a timeout to mark as read after 3 seconds
         setTimeout(async () => {
           try {
-            const res = await fetch(`https://back-production-bb9b.up.railway.app//api/markasread`, {
+            const res = await fetch(`https://back-production-bb9b.up.railway.app/api/markasread`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
@@ -326,7 +326,7 @@ export default {
     }
   },
   async created() {
-    const userRes = await fetch(`https://back-production-bb9b.up.railway.app//api/info`, {
+    const userRes = await fetch(`https://back-production-bb9b.up.railway.app/api/info`, {
       method: "GET",
       credentials: "include",
     });

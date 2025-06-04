@@ -254,7 +254,7 @@ export default {
     };
   },
   beforeRouteEnter(to, from, next) {
-    fetch(`https://back-production-bb9b.up.railway.app//api/info`, {
+    fetch(`https://back-production-bb9b.up.railway.app/api/info`, {
       method: "GET",
       credentials: "include",
     })
@@ -312,7 +312,7 @@ export default {
       }
     },
     getComments(postId) {
-      return fetch(`https://back-production-bb9b.up.railway.app//api/getcomments?post_id=${postId}`, {
+      return fetch(`https://back-production-bb9b.up.railway.app/api/getcomments?post_id=${postId}`, {
         method: 'GET',
         credentials: 'include'
       })
@@ -328,7 +328,7 @@ export default {
             if (!comments[i].Avatar) {
               comments[i].Avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${comments[i].Author}`;
             } else {
-              comments[i].Avatar = `https://back-production-bb9b.up.railway.app//uploads/${comments[i].Avatar}`;
+              comments[i].Avatar = `https://back-production-bb9b.up.railway.app/uploads/${comments[i].Avatar}`;
             }
           }
           this.Comments = comments || [];
@@ -340,7 +340,7 @@ export default {
     },
     async getData() {
       try {
-        const response = await fetch(`https://back-production-bb9b.up.railway.app//api/info`, {
+        const response = await fetch(`https://back-production-bb9b.up.railway.app/api/info`, {
           method: 'GET',
           credentials: 'include',
         });
@@ -367,7 +367,7 @@ export default {
     checkIfFollowing() {
       if (!this.user.username) return;
 
-      fetch(`https://back-production-bb9b.up.railway.app//api/followers?action=isFollowing&profileUser=${this.user.username}`, {
+      fetch(`https://back-production-bb9b.up.railway.app/api/followers?action=isFollowing&profileUser=${this.user.username}`, {
         method: "GET",
         credentials: "include"
       })
@@ -403,7 +403,7 @@ export default {
     },
 
     logout() {
-      fetch(`https://back-production-bb9b.up.railway.app//api/auth/logout`, {
+      fetch(`https://back-production-bb9b.up.railway.app/api/auth/logout`, {
         method: 'POST',
         credentials: 'include'
       })
@@ -423,7 +423,7 @@ export default {
 
     async fetchuserData(id) {
       try {
-        const response = await fetch(`https://back-production-bb9b.up.railway.app//api/userinfo?user_id=${id}`, {
+        const response = await fetch(`https://back-production-bb9b.up.railway.app/api/userinfo?user_id=${id}`, {
           method: "GET",
           credentials: "include"
         });
@@ -445,7 +445,7 @@ export default {
         if (!this.user.avatar) {
           this.user.avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.username}`;
         } else {
-          this.user.avatar = `https://back-production-bb9b.up.railway.app//uploads/${this.user.avatar}`;
+          this.user.avatar = `https://back-production-bb9b.up.railway.app/uploads/${this.user.avatar}`;
         }
 
         // Only fetch posts if user can view them
@@ -463,7 +463,7 @@ export default {
     },
 
     fetchUserPosts(username) {
-      fetch(`https://back-production-bb9b.up.railway.app//api/ownposts?username=${username}`, {
+      fetch(`https://back-production-bb9b.up.railway.app/api/ownposts?username=${username}`, {
         method: "GET",
         credentials: "include"
       })
@@ -503,7 +503,7 @@ export default {
 
     async follow(profileUser) {
       try {
-        const response = await fetch(`https://back-production-bb9b.up.railway.app//api/followers?action=follow&profileUser=${profileUser}`, {
+        const response = await fetch(`https://back-production-bb9b.up.railway.app/api/followers?action=follow&profileUser=${profileUser}`, {
           method: 'POST',
           credentials: 'include'
         });
@@ -541,7 +541,7 @@ export default {
 
     async unfollow(profileUser) {
       try {
-        const response = await fetch(`https://back-production-bb9b.up.railway.app//api/followers?action=unfollow&profileUser=${profileUser}`, {
+        const response = await fetch(`https://back-production-bb9b.up.railway.app/api/followers?action=unfollow&profileUser=${profileUser}`, {
           method: 'POST',
           credentials: 'include'
         });
@@ -586,7 +586,7 @@ export default {
     },
     async fetchNotifications() {
       try {
-        const res = await fetch(`https://back-production-bb9b.up.railway.app//api/notifications`, {
+        const res = await fetch(`https://back-production-bb9b.up.railway.app/api/notifications`, {
           method: 'GET',
           credentials: 'include'
         });
@@ -610,7 +610,7 @@ export default {
         // Set a timeout to mark as read after 3 seconds
         setTimeout(async () => {
           try {
-            const res = await fetch(`https://back-production-bb9b.up.railway.app//api/markasread`, {
+            const res = await fetch(`https://back-production-bb9b.up.railway.app/api/markasread`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'

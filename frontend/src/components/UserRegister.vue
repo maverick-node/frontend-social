@@ -179,7 +179,7 @@ export default {
       // Add JSON user data
       const userJson = JSON.stringify(this.form);
       formData.append("user", userJson);
-      fetch(`https://back-production-bb9b.up.railway.app//api/auth/register`, {
+      fetch(`https://back-production-bb9b.up.railway.app/api/auth/register`, {
         method: "POST",
         credentials: "include",
         body: formData,

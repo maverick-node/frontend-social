@@ -14,7 +14,7 @@
     methods: {
       async checkLogin() {
         try {
-          const response = await fetch(`https://back-production-bb9b.up.railway.app//middle`, {
+          const response = await fetch(`https://back-production-bb9b.up.railway.app/middle`, {
             method: 'GET',
             credentials: 'include',
           });

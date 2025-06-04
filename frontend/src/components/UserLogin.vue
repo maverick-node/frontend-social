@@ -40,7 +40,7 @@ export default {
   methods: {
     async handleLogin() {
       try {
-        const response = await fetch(`https://back-production-bb9b.up.railway.app//api/auth/login`, {
+        const response = await fetch(`https://back-production-bb9b.up.railway.app/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
