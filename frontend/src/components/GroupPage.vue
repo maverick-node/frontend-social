@@ -213,7 +213,7 @@
                   </div>
                   <p class="comment-content">{{ comment.content }}</p>
                   <div v-if="comment.image" class="comment-image">
-                    <img :src="`${import.meta.env.VITE_API_URL}/uploads/${comment.image}`" alt="Comment Image" style="
+                    <img :src="`${apiUrl}/uploads/${comment.image}`" alt="Comment Image" style="
                         max-width: 200px;
                         max-height: 200px;
                         margin-top: 8px;
@@ -532,6 +532,7 @@ export default {
       invitedUsers: new Set(),
       groupMembers: [],
       showNotifications: false,
+      apiUrl: import.meta.env.VITE_API_URL,
     };
   },
   beforeRouteEnter(to, from, next) {

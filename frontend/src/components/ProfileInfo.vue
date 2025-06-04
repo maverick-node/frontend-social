@@ -174,8 +174,7 @@
             </div>
             <div class="post-content">
               <p>{{ post.content }}</p>
-              <img v-if="post.image" :src="`${import.meta.env.VITE_API_URL}/uploads/` + post.image" alt="Post Image"
-                class="post-image" />
+              <img v-if="post.image" :src="`${apiUrl}/uploads/` + post.image" alt="Post Image" class="post-image" />
             </div>
             <div v-if="post.comments_count > 0" class="post-actions">
               <button @click="toggleComments(post.id)">
@@ -194,8 +193,7 @@
                     </div>
                   </div>
                   <p class="comment-text">{{ comment.comment }}</p>
-                  <img v-if="comment.image" :src="`${import.meta.env.VITE_API_URL} /uploads/` + comment.image" alt="Comment Image"
-                    class="comment-image" />
+                  <img v-if="comment.image" :src="`${apiUrl}/uploads/` + comment.image" alt="Comment Image" class="comment-image" />
                 </li>
               </ul>
             </div>
@@ -222,6 +220,7 @@ export default {
   name: "ProfileInfo",
   data() {
     return {
+      apiUrl: import.meta.env.VITE_API_URL,
       isOwner: false,
       isFollowing: false,
       isPending: false,
