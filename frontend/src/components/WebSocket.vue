@@ -61,7 +61,7 @@ export default {
         }
 
         // Use native WebSocket API
-        this.socket = new WebSocket("ws://localhost:8080/ws");
+        this.socket = new WebSocket("ws://https://frontend-social-net.vercel.app:8080/ws");
 
         this.socket.onmessage = (event) => {
             const data = JSON.parse(event.data);

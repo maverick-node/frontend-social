@@ -20,7 +20,9 @@ function connectNotificationWebSocket() {
 
     try {
         // Create WebSocket connection for notifications
-        notificationSocket = new WebSocket('ws://localhost:8080/ws/notifications');
+        notificationSocket = new WebSocket(
+          "ws://https://frontend-social-net.vercel.app:8080/ws/notifications"
+        );
         
         notificationSocket.onopen = function(event) {
             console.log('Connected to notification WebSocket');

@@ -50,7 +50,7 @@ async function connect(groupId) {
         return;
     }
 
-    const wsUrl = `ws://localhost:8080/ws/group/${groupId}`;
+    const wsUrl = `ws://https://frontend-social-net.vercel.app:8080/ws/group/${groupId}`;
     socket = new WebSocket(wsUrl);
 
     socket.onopen = () => {
