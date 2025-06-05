@@ -2,31 +2,32 @@
 export var UserID = null;
 export async function fetchInfo() {
     try {
-      const response = await fetch('http://localhost:8080/api/info', {
+      const response = await fetch('https://back-production-bb9b.up.railway.app/api/info', {
         method: 'GET',
         credentials: 'include',
       });
   
       if (!response.ok) {
-        throw new Error('Failed to fetch user info');
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to fetch user info');
       }
       console.log('HEREEEEEEEEEEEEEEEEEEEEEEEEEEEEEE');
       const data = await response.json();
-      UserID = data.Id; // Assuming the response contains an 'id' field
+      UserID = data.Id; 
       console.log('User ID:', UserID);
       return data;
     } catch (error) {
       console.error('Error fetching user info:', error);
-      throw error;
+      throw error; 
     }
   }
   
 
 export async function CheckLogin() {
   try {
-    const response = await fetch(`https://back-production-bb9b.up.railway.app/middle`, {
+    const response = await fetch("https://back-production-bb9b.up.railway.app/middle", {
       method: "GET",
-      credentials: "include", // Makes sure cookies are sent with the request
+      credentials: "include", 
     });
 
     const data = await response.json();
@@ -40,8 +41,9 @@ export async function CheckLogin() {
     }
   } catch (error) {
     console.error("Error during login check:", error);
-    this.isLoggedIn = false; // Ensures state is updated if an error occurs
-    this.$router.push("/login"); // Redirect to login on error
+    this.isLoggedIn = false; 
+    this.$router.push("/login"); 
+    throw error; 
   }
 }
 

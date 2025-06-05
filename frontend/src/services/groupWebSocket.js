@@ -50,7 +50,7 @@ async function connect(groupId) {
         return;
     }
 
-    const wsUrl = `ws://${import.meta.env.VITE_API_URL}/ws/group/${groupId}`;
+    const wsUrl = `ws://localhost:8080/ws/group/${groupId}`;
     socket = new WebSocket(wsUrl);
 
     socket.onopen = () => {

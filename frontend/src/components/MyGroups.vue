@@ -96,6 +96,7 @@
 
 <script>
 import { fetchInfo } from '@/api/getInfo';
+import { notificationWebSocket } from '../services/notificationWebSocket.js';
 
 export default {
   name: 'MyGroups',
@@ -113,29 +114,32 @@ export default {
     }
   },
   beforeRouteEnter(to, from, next) {
-    fetch(`https://back-production-bb9b.up.railway.app/api/info`, {
-        method: "GET",
-        credentials: "include",
-    })
-    .then(res => {
-        if (res.ok) {
-            next();
-        } else {
+        fetch("https://back-production-bb9b.up.railway.app/api/info", {
+            method: "GET",
+            credentials: "include",
+        })
+        .then(res => {
+            if (res.ok) {
+                next();
+            } else {
+                next('/login'); 
+            }
+        })
+        .catch(() => {
             next('/login'); 
-        }
-    })
-    .catch(() => {
-        next('/login'); 
-    });
-},
+        });
+    },
   async mounted() {
+    // Set up notification WebSocket
+    this.setupNotificationWebSocket();
+    
     await this.fetchMyGroups();
     await this.fetchPendingInvitations();
     document.addEventListener('click', this.handleNotifClose);
     this.fetchNotifications();
   },
   async created(){
-    const userRes = await fetch(`https://back-production-bb9b.up.railway.app/api/info`, {
+    const userRes = await fetch("https://back-production-bb9b.up.railway.app/api/info", {
       method: "GET",
       credentials: "include",
     });
@@ -145,10 +149,18 @@ export default {
     this.user.name = userData.Username;
   },
   methods: {
-   
+    setupNotificationWebSocket() {
+      // Register handler for real-time notifications
+      notificationWebSocket.onNotification('my-groups', (notification) => {
+        console.log('Received real-time notification:', notification);
+        
+        // Refresh notifications and count from server to ensure accuracy
+        this.fetchNotifications();
+      });
+    },
     async fetchMyGroups() {
       try {
-        const response = await fetch(`https://back-production-bb9b.up.railway.app/api/mygroups`, {
+        const response = await fetch('https://back-production-bb9b.up.railway.app/api/mygroups', {
           credentials: 'include'
         });
         if (response.ok) {
@@ -194,7 +206,7 @@ export default {
       this.$router.push(`/profile/${this.user.name}`);
     },
     logout() {
-      fetch(`https://back-production-bb9b.up.railway.app/api/logout`, {
+      fetch('https://back-production-bb9b.up.railway.app/api/logout', {
         method: 'POST',
         credentials: 'include'
       })
@@ -217,8 +229,8 @@ export default {
     async handleInvitation(groupId, userId, action) {
       try {
         const endpoint = action === 'accept' 
-          ? `https://back-production-bb9b.up.railway.app/api/acceptgroupmember`
-          : `https://back-production-bb9b.up.railway.app/api/removememberfromgroup`;
+          ? 'https://back-production-bb9b.up.railway.app/api/acceptgroupmember'
+          : 'https://back-production-bb9b.up.railway.app/api/removememberfromgroup';
         const response = await fetch(endpoint, {
           method: 'POST',
           credentials: 'include',
@@ -242,7 +254,7 @@ export default {
     async leaveGroup(groupId) {
       try {
         // Get current user ID from the auth API
-        const userRes = await fetch(`https://back-production-bb9b.up.railway.app/api/info`, {
+        const userRes = await fetch("https://back-production-bb9b.up.railway.app/api/info", {
           method: "GET",
           credentials: "include",
         });
@@ -254,7 +266,7 @@ export default {
         
         const userData = await userRes.json();
         
-        const response = await fetch(`https://back-production-bb9b.up.railway.app/api/removememberfromgroup`, {
+        const response = await fetch("https://back-production-bb9b.up.railway.app/api/removememberfromgroup", {
           method: "POST",
           credentials: "include",
           headers: {
@@ -286,7 +298,7 @@ export default {
     },
     async fetchNotifications() {
       try {
-        const res = await fetch(`https://back-production-bb9b.up.railway.app/api/notifications`, {
+        const res = await fetch('https://back-production-bb9b.up.railway.app/api/notifications', {
           method: 'GET',
           credentials: 'include'
         });
@@ -294,20 +306,23 @@ export default {
           const data = await res.json();
           this.notifications = data;
           this.unreadNotificationCount = data.filter(n => !n.is_read).length;
+        } else {
+          this.notifications = [];
+          this.unreadNotificationCount = 0;
         }
       } catch (err) {
         console.error('Failed to fetch notifications:', err);
+        this.notifications = [];
+        this.unreadNotificationCount = 0;
       }
     },
     async markNotificationAsRead(notificationId) {
       console.log(notificationId);
       
       try {
-        // Find the notification first
         const notification = this.notifications.find(n => n.id === notificationId);
         if (!notification) return;
 
-        // Set a timeout to mark as read after 3 seconds
         setTimeout(async () => {
           try {
             const res = await fetch(`https://back-production-bb9b.up.railway.app/api/markasread`, {
@@ -324,11 +339,12 @@ export default {
             console.log("res", res);
             if (res.ok) {
               notification.is_read = true;
+              this.unreadNotificationCount = this.notifications.filter(n => !n.is_read).length;
             }
           } catch (error) {
             console.error('Error marking notification as read:', error);
           }
-        }, 3000); // 3 seconds delay
+        }, 2000); 
       } catch (error) {
         console.error('Error marking notification as read:', error);
       }
@@ -359,6 +375,8 @@ export default {
     }
   },
   beforeUnmount() {
+    // Clean up notification WebSocket
+    notificationWebSocket.removeNotificationHandler('my-groups');
     document.removeEventListener('click', this.handleNotifClose);
   }
 }
@@ -380,8 +398,11 @@ export default {
   border-radius: 1.5rem 0 0 1.5rem;
   box-shadow: 2px 0 16px rgba(35,38,58,0.08);
   min-height: 100vh;
-  z-index: 2;
+  z-index: 100;
   justify-content: flex-start;
+  position: fixed;
+  left: 0;
+  top: 0;
 }
 .sidebar-icons {
   display: flex;
@@ -389,6 +410,7 @@ export default {
   gap: 2rem;
   width: 100%;
   align-items: center;
+  position: relative;
   margin-bottom: 2.5rem;
 }
 .sidebar-icon {
@@ -415,6 +437,7 @@ export default {
   align-items: center;
   padding: 2rem 2rem 2rem 1.5rem;
   min-width: 0;
+  margin-left: 70px;
 }
 .groups-card-wrapper {
   width: 100%;
@@ -643,27 +666,31 @@ export default {
     gap: 1.2rem;
   }
 }
-@media (max-width: 600px) {
-  .groups-main-content {
-    padding: 1rem 0.5rem 1rem 0.5rem;
-  }
-  .groups-title {
-    font-size: 1.3rem;
-    margin-bottom: 1.2rem;
-  }
-  .group-card {
-    padding: 1.1rem 0.7rem 1rem 0.7rem;
-    border-radius: 0.7rem;
-  }
-  .invitation-card {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.7rem;
-    padding: 1rem 0.7rem;
-  }
-  .invitation-actions {
+@media (max-width: 768px) {
+  .sidebar {
     width: 100%;
-    justify-content: flex-end;
+    min-height: auto;
+    height: 70px;
+    flex-direction: row;
+    padding: 0;
+    border-radius: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+  }
+
+  .sidebar-icons {
+    flex-direction: row;
+    justify-content: space-around;
+    margin: 0;
+    padding: 0 1rem;
+    position: relative;
+  }
+
+  .groups-main-content {
+    margin-left: 0;
+    margin-top: 70px;
   }
 }
 .sidebar-icon[title="Notifications"] {
@@ -671,21 +698,21 @@ export default {
 }
 
 .notif-badge {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    background: #ef4444;
-    color: white;
-    border-radius: 50%;
-    width: 18px;
-    height: 18px;
-    font-size: 0.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    border: 2px solid #fff;
-    z-index: 1;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  border: 2px solid #fff;
+  z-index: 1;
 }
 
 .notif-popup {

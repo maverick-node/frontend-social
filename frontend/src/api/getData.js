@@ -1,11 +1,11 @@
 export async function getData() {
-    return fetch(`https://back-production-bb9b.up.railway.app/api/info`, {
+    return fetch('https://back-production-bb9b.up.railway.app//api/info', {
         method: 'GET',
         credentials: 'include',
     })
     .then(response => {
         if (!response.ok) {
-        throw new Error('Failed to fetch data');
+            throw new Error('Failed to fetch data');
         }
         return response.json();
     })
@@ -17,4 +17,4 @@ export async function getData() {
         console.error('Error fetching data:', error);
         throw error;
     });
-    }
+}

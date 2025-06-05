@@ -16,15 +16,14 @@ export default{
     methods: {
         async fetchInfo() {
             try {
-                const response = await fetch(`https://back-production-bb9b.up.railway.app/api/info`, {
+                const response = await fetch('https://back-production-bb9b.up.railway.app/api/info', {
                     method: 'GET',
                     credentials: 'include',
                 });
 
                 if (!response.ok) {
-                    console.log('Response not ok');
-                    
-                    throw new Error('Network response was not ok');
+                    const errorText = await response.text();
+                    throw new Error(errorText || 'Network response was not ok');
                 }
 
                 const data = await response.json();
@@ -33,6 +32,7 @@ export default{
                 this.info = data;
             } catch (error) {
                 console.error('Error fetching info:', error);
+                this.showNotification(error.message || 'Error fetching info', 'error');
             }
         },
     },

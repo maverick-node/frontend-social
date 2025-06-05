@@ -7,12 +7,12 @@
       </div>
       <form @submit.prevent="handleLogin">
         <div class="form-group">
-          <label for="username">Username</label>
-          <input type="text" v-model="username" id="username" required />
+          <label for="username">Email/Username</label>
+          <input type="text" v-model="username" id="username" placeholder="Enter your Email/Username" required />
         </div>
         <div class="form-group">
           <label for="password">Password</label>
-          <input type="password" v-model="password" id="password" required />
+          <input type="password" v-model="password" id="password" placeholder="Enter your Password" required />
         </div>
         <button type="submit" class="btn">Login</button>
       </form>
@@ -40,7 +40,7 @@ export default {
   methods: {
     async handleLogin() {
       try {
-        const response = await fetch(`https://back-production-bb9b.up.railway.app/api/auth/login`, {
+        const response = await fetch('https://back-production-bb9b.up.railway.app/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

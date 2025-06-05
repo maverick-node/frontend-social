@@ -1,13 +1,6 @@
 <template>
   <div class="group-layout">
     <!-- Notifications -->
-    <div class="notifications-container">
-      <div v-for="notification in notifications" :key="notification.id"
-        :class="['notification', `notification-${notification.type}`]">
-        {{ notification.message }}
-      </div>
-    </div>
-
     <!-- Add notification component at the top level -->
     <div v-if="notification.visible" :class="['notification', `notification-${notification.type}`]">
       {{ notification.message }}
@@ -57,9 +50,7 @@
             <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
             <path d="M13.73 21a2 2 0 01-3.46 0" />
           </svg>
-          <span v-if="unreadNotificationCount > 0" class="notif-badge">{{
-            unreadNotificationCount
-            }}</span>
+          <span v-if="unreadNotificationCount > 0" class="notif-badge">{{ unreadNotificationCount }}</span>
         </div>
         <!-- Notification Popup -->
         <div v-if="showNotifications" ref="notifPopup" class="notif-popup">
@@ -134,7 +125,7 @@
               Member Requests
               <span v-if="pendingRequests.length > 0" class="badge">{{
                 pendingRequests.length
-                }}</span>
+              }}</span>
             </button>
             <button v-if="membershipStatus === 'accepted'" class="invite-btn" @click="openInviteModal">
               Invite Members
@@ -213,7 +204,7 @@
                   </div>
                   <p class="comment-content">{{ comment.content }}</p>
                   <div v-if="comment.image" class="comment-image">
-                    <img :src="`${apiUrl}/uploads/${comment.image}`" alt="Comment Image" style="
+                    <img :src="`https://back-production-bb9b.up.railway.app/uploads/${comment.image}`" alt="Comment Image" style="
                         max-width: 200px;
                         max-height: 200px;
                         margin-top: 8px;
@@ -252,7 +243,7 @@
                     <span class="message-author">{{ msg.username }}</span>
                     <span class="message-time">{{
                       formatMessageTime(msg.created_at)
-                      }}</span>
+                    }}</span>
                   </div>
                   <p class="message-content">{{ msg.content }}</p>
                 </div>
@@ -331,14 +322,14 @@
                           <span class="response-icon">👥</span>
                           <span class="response-count">{{
                             event.going_count || 0
-                            }}</span>
+                          }}</span>
                           <span class="response-label">Going</span>
                         </span>
                         <span class="response-stat not-going">
                           <span class="response-icon">✕</span>
                           <span class="response-count">{{
                             event.not_going_count || 0
-                            }}</span>
+                          }}</span>
                           <span class="response-label">Not Going</span>
                         </span>
                       </div>
@@ -351,7 +342,7 @@
                       }" :disabled="event.user_response === 1">
                         <span class="btn-icon">{{
                           event.user_response === 1 ? "✓" : "👤"
-                          }}</span>
+                        }}</span>
                         {{
                           event.user_response === 1 ? "You're Going" : "Going"
                         }}
@@ -363,7 +354,7 @@
                       }" :disabled="event.user_response === -1">
                         <span class="btn-icon">{{
                           event.user_response === -1 ? "✓" : "✕"
-                          }}</span>
+                        }}</span>
                         {{
                           event.user_response === -1 ? "Not Going" : "Not Going"
                         }}
@@ -479,6 +470,8 @@
 </template>
 
 <script>
+import { notificationWebSocket } from '../services/notificationWebSocket.js';
+
 export default {
   props: ["showNotifications"],
   name: "GroupPage",
@@ -532,17 +525,19 @@ export default {
       invitedUsers: new Set(),
       groupMembers: [],
       showNotifications: false,
-      apiUrl: import.meta.env.VITE_API_URL,
     };
   },
   beforeRouteEnter(to, from, next) {
-    fetch(`https://back-production-bb9b.up.railway.app/api/info`, {
+    fetch("https://back-production-bb9b.up.railway.app/api/info", {
       method: "GET",
       credentials: "include",
     })
-      .then(res => {
+      .then(async res => {
         if (res.ok) {
-          next();
+          const userData = await res.json();
+          next(vm => {
+            vm.user.username = userData.Username;
+          });
         } else {
           next('/login');
         }
@@ -564,8 +559,17 @@ export default {
       await this.fetchPendingRequests();
     }
     this.initializeWebSocket(groupId);
+    this.scrollToBottom(); // Add this line
   },
   methods: {
+    scrollToBottom() {
+      this.$nextTick(() => {
+        const chatContainer = document.querySelector('.chat-messages');
+        if (chatContainer) {
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+      });
+    },
     async fetchGroupDetails(groupId) {
       try {
         const response = await fetch(
@@ -591,7 +595,7 @@ export default {
     handleNotifClick() {
       this.showNotifications = !this.showNotifications;
       if (this.showNotifications) {
-        // Mark all unread notifications as read when opening the popup
+        //mark ga3 notif bli read
         this.notifications.forEach(notif => {
           if (!notif.is_read) {
             this.markNotificationAsRead(notif.id);
@@ -612,7 +616,7 @@ export default {
     },
     async fetchNotifications() {
       try {
-        const res = await fetch(`https://back-production-bb9b.up.railway.app/api/notifications`, {
+        const res = await fetch("https://back-production-bb9b.up.railway.app/api/notifications", {
           method: "GET",
           credentials: "include",
         });
@@ -620,7 +624,6 @@ export default {
           const data = await res.json();
           console.log("sassasaassa", data);
 
-          // Ensure data is an array and map it safely
           this.notifications = Array.isArray(data)
             ? data.map((notif) => ({
               id: notif.id,
@@ -631,6 +634,8 @@ export default {
               is_read: notif.is_read || false,
             }))
             : [];
+
+          this.unreadNotificationCount = this.notifications.filter(n => !n.is_read).length;
         } else {
           this.notifications = [];
         }
@@ -641,11 +646,10 @@ export default {
     },
     async markNotificationAsRead(notificationId) {
       try {
-        // Find the notification first
         const notification = this.notifications.find(n => n.id === notificationId);
         if (!notification) return;
 
-        // Set a timeout to mark as read after 3 seconds
+        // Set a timeout to mark as read after 2 seconds
         setTimeout(async () => {
           try {
             const res = await fetch(`https://back-production-bb9b.up.railway.app/api/markasread`, {
@@ -665,7 +669,7 @@ export default {
           } catch (error) {
             console.error('Error marking notification as read:', error);
           }
-        }, 3000); // 3 seconds delay
+        }, 2000);
       } catch (error) {
         console.error('Error marking notification as read:', error);
       }
@@ -700,7 +704,7 @@ export default {
     },
     initializeWebSocket(groupId) {
       this.socket = new WebSocket(
-        `ws://${import.meta.env.VITE_API_URL.replace('http://', '')}/ws/group/${groupId}`
+        `ws://localhost:8080/ws/group/${groupId}`
       );
 
       this.socket.onopen = () => {
@@ -723,14 +727,12 @@ export default {
             return;
           }
 
-          // Handle error messages
           if (data && data.error) {
             console.error('WebSocket error:', data.error);
             this.showNotification(data.error, 'error');
             return;
           }
 
-          // Handle new messages
           if (data && data.username && data.content) {
             this.chatMessages.push({
               ...data,
@@ -738,10 +740,8 @@ export default {
               created_at: new Date(data.created_at)
             });
 
-            // Sort messages by date
             this.chatMessages.sort((a, b) => a.created_at - b.created_at);
 
-            // Scroll to bottom of chat
             this.$nextTick(() => {
               const chatContainer = document.querySelector('.chat-messages');
               if (chatContainer) {
@@ -785,6 +785,20 @@ export default {
     handleImageUpload(event) {
       const file = event.target.files[0];
       if (file) {
+        const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+      if (!allowedTypes.includes(file.type)) {
+          this.showNotification('Only JPEG, PNG, and GIF images are allowed', 'error');
+          event.target.value = ''; // Clear the input
+          return;
+        }
+        // Validate file size (2MB limit)
+        const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+        if (file.size > maxSize) {
+          this.showNotification('Image file size must be less than 2MB', 'error');
+          event.target.value = ''; // Clear the input
+          return;
+        }
+
         const reader = new FileReader();
         reader.onload = (e) => {
           this.image = e.target.result; // base64 string
@@ -794,21 +808,20 @@ export default {
     },
     async leaveGroup() {
       try {
-        // Get current user ID from the auth API
-        const userRes = await fetch(`https://back-production-bb9b.up.railway.app/api/info`, {
+        const userRes = await fetch("https://back-production-bb9b.up.railway.app/api/info", {
           method: "GET",
           credentials: "include",
         });
-        
+
         if (!userRes.ok) {
           this.showNotification("Failed to get user information", "error");
           return;
         }
-        
+
         const userData = await userRes.json();
-        
+
         const response = await fetch(
-          `https://back-production-bb9b.up.railway.app/api/removememberfromgroup`,
+          "https://back-production-bb9b.up.railway.app/api/removememberfromgroup",
           {
             method: "POST",
             credentials: "include",
@@ -953,7 +966,8 @@ export default {
         );
 
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
+          const errorText = await response.text();
+          throw new Error(errorText);
         }
 
         const events = await response.json();
@@ -980,7 +994,7 @@ export default {
         }
       } catch (error) {
         console.error("Error fetching events:", error);
-        this.showNotification("Error fetching events", "error");
+        this.showNotification(error.message || "Error fetching events", "error");
         this.upcomingEvents = [];
         this.pastEvents = [];
       }
@@ -997,12 +1011,14 @@ export default {
 
         if (response.ok) {
           const posts = await response.json();
+          console.log("Fetched posts:", posts);
+          
           if (posts) {
             this.posts = posts.map((post) => ({
               ...post,
               id: post.id,
               author: post.author,
-              authorAvatar: post.Avatar ? post.Avatar : `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author}`,
+              authorAvatar: post.avatar ? `https://back-production-bb9b.up.railway.app/uploads/${post.avatar}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author}`,
               image: post.image ? post.image : null,
               created_at: post.creation_date,
               comments: [],
@@ -1059,6 +1075,14 @@ export default {
     handleImageUpload(event) {
       const file = event.target.files[0];
       if (file) {
+        // Validate file size (2MB limit)
+        const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+        if (file.size > maxSize) {
+          alert('Image file size must be less than 2MB');
+          event.target.value = ''; // Clear the input
+          return;
+        }
+
         const reader = new FileReader();
         reader.onload = (e) => {
           this.image = e.target.result; // base64 string
@@ -1078,7 +1102,7 @@ export default {
         formData.append("image", post.commentImage);
       }
       try {
-        const res = await fetch(`https://back-production-bb9b.up.railway.app/api/groupcomments/add`, {
+        const res = await fetch("https://back-production-bb9b.up.railway.app/api/groupcomments/add", {
           method: "POST",
           credentials: "include",
           body: formData,
@@ -1107,6 +1131,14 @@ export default {
     onCommentImageChange(event, post) {
       const file = event.target.files[0];
       if (file) {
+        // Validate file size (2MB limit)
+        const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+        if (file.size > maxSize) {
+          this.showNotification('Image file size must be less than 2MB', 'error'); 
+          event.target.value = ''; // Clear the input
+          return;
+        }
+
         post.commentImage = file;
         // Create a preview URL
         post.commentImagePreview = URL.createObjectURL(file);
@@ -1164,7 +1196,7 @@ export default {
       this.$router.push('/mygroups');
     },
     logout() {
-      fetch(`https://back-production-bb9b.up.railway.app/api/logout`, {
+      fetch('https://back-production-bb9b.up.railway.app/api/logout', {
         method: 'POST',
         credentials: 'include'
       })
@@ -1213,8 +1245,8 @@ export default {
     async handleMemberRequest(userId, action) {
       try {
         const endpoint = action === 'accept'
-          ? `https://back-production-bb9b.up.railway.app/api/acceptgroupmember`
-          : `https://back-production-bb9b.up.railway.app/api/removememberfromgroup`;
+          ? 'https://back-production-bb9b.up.railway.app/api/acceptgroupmember'
+          : 'https://back-production-bb9b.up.railway.app/api/removememberfromgroup';
 
         const response = await fetch(endpoint, {
           method: 'POST',
@@ -1249,8 +1281,8 @@ export default {
     async handleInvitation(action) {
       try {
         const endpoint = action === 'accept'
-          ? `https://back-production-bb9b.up.railway.app/api/acceptgroupinvite`
-          : `https://back-production-bb9b.up.railway.app/api/declinegroupinvite`;
+          ? 'https://back-production-bb9b.up.railway.app/api/acceptgroupinvite'
+          : 'https://back-production-bb9b.up.railway.app/api/declinegroupinvite';
 
         const response = await fetch(endpoint, {
           method: 'POST',
@@ -1290,7 +1322,7 @@ export default {
     },
     async fetchAllUsers() {
       try {
-        const response = await fetch(`https://back-production-bb9b.up.railway.app/api/allusers`, {
+        const response = await fetch("https://back-production-bb9b.up.railway.app/api/allusers", {
           credentials: "include",
         });
         if (response.ok) {
@@ -1353,7 +1385,7 @@ export default {
 
     async inviteUser(user) {
       try {
-        const response = await fetch(`https://back-production-bb9b.up.railway.app/api/addmembertogroup`, {
+        const response = await fetch("https://back-production-bb9b.up.railway.app/api/addmembertogroup", {
           method: "POST",
           credentials: "include",
           headers: {
@@ -1375,7 +1407,7 @@ export default {
 
           // Create notification for the invited user
           try {
-            await fetch(`https://back-production-bb9b.up.railway.app/api/notifications`, {
+            await fetch("https://back-production-bb9b.up.railway.app/api/notifications", {
               method: "POST",
               credentials: "include",
               headers: {
@@ -1444,11 +1476,30 @@ export default {
         });
       }
     },
+    setupNotificationWebSocket() {
+      // Register handler for real-time notifications
+      notificationWebSocket.onNotification('group-page', (notification) => {
+        console.log('Received real-time notification:', notification);
+
+        // Refresh notifications and count from server to ensure accuracy
+        this.fetchNotifications();
+      });
+    },
   },
   mounted() {
+    // Set up notification WebSocket
+    this.setupNotificationWebSocket();
+
+    this.fetchGroupDetails(this.$route.params.id);
+    this.fetchPosts(this.$route.params.id);
+    this.fetchNotifications();
     document.addEventListener('click', this.handleNotifClose);
+    this.scrollToBottom(); // Add this line
   },
   beforeUnmount() {
+    // Clean up notification WebSocket
+    notificationWebSocket.removeNotificationHandler('group-page');
+
     document.removeEventListener('click', this.handleNotifClose);
     if (this.socket) {
       this.socket.close();
@@ -1457,6 +1508,14 @@ export default {
   computed: {
     unreadNotificationCount() {
       return this.notifications.filter(notif => !notif.is_read).length;
+    }
+  },
+  watch: {
+    chatMessages: {
+      handler() {
+        this.scrollToBottom();
+      },
+      deep: true
     }
   },
 };
@@ -1479,7 +1538,7 @@ export default {
   border-radius: 1.5rem 0 0 1.5rem;
   box-shadow: 2px 0 16px rgba(35, 38, 58, 0.08);
   min-height: 100vh;
-  z-index: 2;
+  z-index: 100;
   justify-content: flex-start;
   position: fixed;
   left: 0;
@@ -1492,6 +1551,7 @@ export default {
   gap: 2rem;
   width: 100%;
   align-items: center;
+  position: relative;
   margin-bottom: 2.5rem;
 }
 
@@ -1507,6 +1567,7 @@ export default {
   opacity: 0.7;
   cursor: pointer;
   transition: background 0.2s, opacity 0.2s;
+  position: relative;
 }
 
 .sidebar-icon.active,
@@ -1745,6 +1806,8 @@ export default {
   transition: transform 0.3s ease;
 }
 
+
+
 .comment:hover {
   transform: translateX(5px);
 }
@@ -1891,6 +1954,16 @@ export default {
   margin-top: 1rem;
 }
 
+.post-image img {
+  max-width: 100%;
+  max-height: 300px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 0.5rem;
+  margin-top: 0.7rem;
+}
+
 .post-actions button {
   background: #e5e7eb;
   color: #4b5563;
@@ -1977,8 +2050,34 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    min-height: auto;
+    height: 70px;
+    flex-direction: row;
+    padding: 0;
+    border-radius: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+  }
+
+  .sidebar-icons {
+    flex-direction: row;
+    justify-content: space-around;
+    margin: 0;
+    padding: 0 1rem;
+    position: relative;
+  }
+
+  .group-main-content {
+    margin-left: 0;
+    margin-top: 70px;
+  }
+
   .group-container {
-    padding: 1rem;
+    padding-top: 1rem;
   }
 
   .group-header {
@@ -3110,20 +3209,20 @@ button:disabled {
 
 .notif-badge {
   position: absolute;
-  top: -5px;
-  right: -5px;
+  top: 4px;
+  right: 4px;
   background: #ef4444;
   color: white;
-  font-size: 0.75rem;
-  font-weight: 600;
-  min-width: 18px;
+  border-radius: 50%;
+  width: 18px;
   height: 18px;
-  border-radius: 9px;
+  font-size: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 4px;
-  border: 2px solid #23263a;
+  font-weight: 600;
+  border: 2px solid #fff;
+  z-index: 1;
 }
 
 .post-title,

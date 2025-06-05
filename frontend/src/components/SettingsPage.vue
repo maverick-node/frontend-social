@@ -111,6 +111,8 @@
 
 <script>
 import ProfileInfo from './ProfileInfo.vue';
+import { fetchInfo } from '../api/getInfo.js';
+import { notificationWebSocket } from '../services/notificationWebSocket.js';
 
 export default {
   name: "MySettings",
@@ -130,7 +132,7 @@ export default {
   },
 
   beforeRouteEnter(to, from, next) {
-    fetch(`https://back-production-bb9b.up.railway.app/api/info`, {
+    fetch("https://back-production-bb9b.up.railway.app/api/info", {
       method: "GET",
       credentials: "include",
     })
@@ -211,7 +213,7 @@ export default {
       }
     },
     async checkprivacy() {
-      const res = await fetch(`https://back-production-bb9b.up.railway.app/api/checkmyprivacy`, {
+      const res = await fetch("https://back-production-bb9b.up.railway.app/api/checkmyprivacy", {
         credentials: 'include',
       })
       const data = await res.json()
@@ -224,7 +226,7 @@ export default {
       }
     },
     logout() {
-      fetch(`https://back-production-bb9b.up.railway.app/api/auth/logout`, {
+      fetch('https://back-production-bb9b.up.railway.app/api/auth/logout', {
         method: 'POST',
         credentials: 'include'
       })
@@ -253,7 +255,7 @@ export default {
     },
     async fetchNotifications() {
       try {
-        const res = await fetch(`https://back-production-bb9b.up.railway.app/api/notifications`, {
+        const res = await fetch('https://back-production-bb9b.up.railway.app/api/notifications', {
           method: 'GET',
           credentials: 'include'
         });
@@ -261,9 +263,14 @@ export default {
           const data = await res.json();
           this.notifications = data;
           this.unreadNotificationCount = data.filter(n => !n.is_read).length;
+        } else {
+          this.notifications = [];
+          this.unreadNotificationCount = 0;
         }
       } catch (err) {
         console.error('Failed to fetch notifications:', err);
+        this.notifications = [];
+        this.unreadNotificationCount = 0;
       }
     },
     async markNotificationAsRead(notificationId) {
@@ -291,6 +298,8 @@ export default {
             console.log("res", res);
             if (res.ok) {
               notification.is_read = true;
+              // Update unread count
+              this.unreadNotificationCount = this.notifications.filter(n => !n.is_read).length;
             }
           } catch (error) {
             console.error('Error marking notification as read:', error);
@@ -323,10 +332,19 @@ export default {
         !this.$refs.notifPopup.contains(event.target)) {
         this.showNotifications = false;
       }
-    }
+    },
+    setupNotificationWebSocket() {
+      // Register handler for real-time notifications
+      notificationWebSocket.onNotification('settings-page', (notification) => {
+        console.log('Received real-time notification:', notification);
+        
+        // Refresh notifications and count from server to ensure accuracy
+        this.fetchNotifications();
+      });
+    },
   },
   async created() {
-    const userRes = await fetch(`https://back-production-bb9b.up.railway.app/api/info`, {
+    const userRes = await fetch("https://back-production-bb9b.up.railway.app/api/info", {
       method: "GET",
       credentials: "include",
     });
@@ -337,10 +355,15 @@ export default {
     await this.fetchInvitations();
   },
   mounted() {
-    document.addEventListener('click', this.handleNotifClose);
+    // Set up notification WebSocket
+    this.setupNotificationWebSocket();
+    
     this.fetchNotifications();
+    document.addEventListener('click', this.handleNotifClose);
   },
   beforeUnmount() {
+    // Clean up notification WebSocket
+    notificationWebSocket.removeNotificationHandler('settings-page');
     document.removeEventListener('click', this.handleNotifClose);
   }
 };
@@ -362,6 +385,12 @@ export default {
   padding: 2rem 0 1rem 0;
   border-radius: 1.5rem 0 0 1.5rem;
   box-shadow: 2px 0 16px rgba(35, 38, 58, 0.08);
+  min-height: 100vh;
+  z-index: 100;
+  justify-content: flex-start;
+  position: fixed;
+  left: 0;
+  top: 0;
 }
 
 .sidebar-icons {
@@ -370,6 +399,8 @@ export default {
   gap: 2rem;
   width: 100%;
   align-items: center;
+  position: relative;
+  margin-bottom: 2.5rem;
 }
 
 .sidebar-icon {
@@ -398,6 +429,7 @@ export default {
   align-items: center;
   padding: 2rem 2rem 2rem 1.5rem;
   min-width: 0;
+  margin-left: 70px;
 }
 
 .settings-card-wrapper {
@@ -453,7 +485,7 @@ export default {
 }
 
 .privacy-status::before {
-  content: '��';
+  content: '🔒';
   font-size: 1.2rem;
 }
 
@@ -612,6 +644,10 @@ export default {
     border-radius: 0 0 1.5rem 1.5rem;
     padding: 0 1rem;
     box-shadow: 0 2px 16px rgba(35, 38, 58, 0.08);
+    position: fixed;
+    top: 0;
+    left: 0;
+    min-height: auto;
   }
 
   .sidebar-icons {
@@ -619,10 +655,13 @@ export default {
     gap: 2rem;
     width: 100%;
     justify-content: center;
+    margin-bottom: 0;
   }
 
   .settings-main-content {
     padding: 1rem 0.5rem;
+    margin-left: 0;
+    margin-top: 60px;
   }
 
   .settings-card-wrapper,
@@ -642,6 +681,14 @@ export default {
   .privacy-section,
   .invitations-section {
     padding: 1.5rem;
+  }
+
+  .notif-popup {
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 350px;
   }
 }
 
@@ -681,10 +728,18 @@ export default {
     width: 48%;
     text-align: center;
   }
+
+  .sidebar-icons {
+    gap: 1rem;
+  }
+
+  .sidebar-icon {
+    width: 40px;
+    height: 40px;
+  }
 }
 
 @media (max-width: 480px) {
-
   .settings-card,
   .privacy-section,
   .invitations-section {
@@ -723,6 +778,35 @@ export default {
   .no-invitations {
     padding: 1rem;
     font-size: 0.9rem;
+  }
+
+  .sidebar-icons {
+    gap: 0.5rem;
+  }
+
+  .sidebar-icon {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+@media (max-width: 360px) {
+  .sidebar-icons {
+    gap: 0.25rem;
+  }
+
+  .sidebar-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .settings-card {
+    padding: 0.875rem;
+  }
+
+  .privacy-section,
+  .invitations-section {
+    padding: 0.875rem;
   }
 }
 

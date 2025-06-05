@@ -12,7 +12,7 @@
           </svg>
         </div>
         <!-- Profile Icon -->
-        <div class="sidebar-icon active" title="Profile">
+        <div class="sidebar-icon active" title="Profile" @click="goToProfile">
           <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
             stroke-linejoin="round" viewBox="0 0 24 24">
             <circle cx="12" cy="8" r="4" />
@@ -174,7 +174,8 @@
             </div>
             <div class="post-content">
               <p>{{ post.content }}</p>
-              <img v-if="post.image" :src="`${apiUrl}/uploads/` + post.image" alt="Post Image" class="post-image" />
+              <img v-if="post.image" :src="'https://back-production-bb9b.up.railway.app/uploads/' + post.image" alt="Post Image"
+                class="post-image" />
             </div>
             <div v-if="post.comments_count > 0" class="post-actions">
               <button @click="toggleComments(post.id)">
@@ -193,7 +194,8 @@
                     </div>
                   </div>
                   <p class="comment-text">{{ comment.comment }}</p>
-                  <img v-if="comment.image" :src="`${apiUrl}/uploads/` + comment.image" alt="Comment Image" class="comment-image" />
+                  <img v-if="comment.image" :src="'https://back-production-bb9b.up.railway.app/uploads/' + comment.image" alt="Comment Image"
+                    class="comment-image" />
                 </li>
               </ul>
             </div>
@@ -214,13 +216,12 @@
 </template>
 
 <script>
-import { getData } from '@/api/getData';
+import { notificationWebSocket } from '../services/notificationWebSocket.js';
 
 export default {
   name: "ProfileInfo",
   data() {
     return {
-      apiUrl: import.meta.env.VITE_API_URL,
       isOwner: false,
       isFollowing: false,
       isPending: false,
@@ -250,11 +251,12 @@ export default {
         date_of_birth: "",
         email: "",
         follow_status: ""
-      }
+      },
+      CurrentUsername: "",
     };
   },
   beforeRouteEnter(to, from, next) {
-    fetch(`https://back-production-bb9b.up.railway.app/api/info`, {
+    fetch("https://back-production-bb9b.up.railway.app/api/info", {
       method: "GET",
       credentials: "include",
     })
@@ -281,22 +283,51 @@ export default {
         this.isOwner;
     }
   },
+  watch: {
+    '$route'(to, from) {
+      // Handle route changes (when navigating between different profiles)
+      if (to.params.id !== from.params.id) {
+        this.resetComponentState();
+        this.initializeProfile(to.params.id);
+      }
+    }
+  },
   async created() {
     const userId = this.$route.params.id;
-
     const currentUserId = await this.getData();
-    console.log("Current User ID:", currentUserId);
-
+    
     if (!currentUserId) {
       console.error("User is not logged in. Redirecting to login page.");
       this.$router.push("/login");
       return;
     }
 
-    this.fetchuserData(userId);
-    this.isOwner = currentUserId === userId;
+    this.CurrentUsername = currentUserId;
+    this.initializeProfile(userId, currentUserId);
   },
   methods: {
+    resetComponentState() {
+      this.showFollowersList = false;
+      this.showFollowingList = false;
+      this.posts = [];
+      this.Comments = [];
+      this.visibleCommentsPostId = null;
+      this.showNotifications = false;
+      this.notifications = [];
+      this.unreadNotificationCount = 0;
+    },
+    async initializeProfile(userId, currentUserId = null) {
+      if (!currentUserId) {
+        currentUserId = await this.getData();
+        this.CurrentUsername = currentUserId;
+      }
+      
+      this.fetchuserData(userId);
+      this.isOwner = currentUserId === userId;
+    },
+    goToProfile() {
+      this.$router.push(`/profile/${this.CurrentUsername}`);
+    },
     goToSettings() {
       this.$router.push('/settings');
     },
@@ -328,7 +359,7 @@ export default {
             if (!comments[i].Avatar) {
               comments[i].Avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${comments[i].Author}`;
             } else {
-              comments[i].Avatar = `https://back-production-bb9b.up.railway.app/uploads/${comments[i].Avatar}`;
+              comments[i].Avatar = 'https://back-production-bb9b.up.railway.app/uploads/' + comments[i].Avatar;
             }
           }
           this.Comments = comments || [];
@@ -336,11 +367,12 @@ export default {
         })
         .catch(error => {
           console.error('Error fetching comments:', error);
+          this.showNotification(error.message || 'Error fetching comments', 'error');
         });
     },
     async getData() {
       try {
-        const response = await fetch(`https://back-production-bb9b.up.railway.app/api/info`, {
+        const response = await fetch('https://back-production-bb9b.up.railway.app/api/info', {
           method: 'GET',
           credentials: 'include',
         });
@@ -403,7 +435,7 @@ export default {
     },
 
     logout() {
-      fetch(`https://back-production-bb9b.up.railway.app/api/auth/logout`, {
+      fetch('https://back-production-bb9b.up.railway.app/api/auth/logout', {
         method: 'POST',
         credentials: 'include'
       })
@@ -429,6 +461,7 @@ export default {
         });
 
         if (!response.ok) {
+          const errorText = await response.text();
           if (response.status === 404) {
             this.$router.push('/404');
             return;
@@ -436,7 +469,7 @@ export default {
             this.$router.push('/');
             return;
           }
-          throw new Error("Failed to fetch user data");
+          throw new Error(errorText);
         }
 
         const data = await response.json();
@@ -445,7 +478,7 @@ export default {
         if (!this.user.avatar) {
           this.user.avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.username}`;
         } else {
-          this.user.avatar = `https://back-production-bb9b.up.railway.app/uploads/${this.user.avatar}`;
+          this.user.avatar = 'https://back-production-bb9b.up.railway.app/uploads/' + this.user.avatar;
         }
 
         // Only fetch posts if user can view them
@@ -458,6 +491,7 @@ export default {
 
       } catch (error) {
         console.error("Error fetching user data:", error);
+        this.showNotification(error.message || "Error fetching user data", "error");
         this.$router.push('/404');
       }
     },
@@ -586,7 +620,7 @@ export default {
     },
     async fetchNotifications() {
       try {
-        const res = await fetch(`https://back-production-bb9b.up.railway.app/api/notifications`, {
+        const res = await fetch('https://back-production-bb9b.up.railway.app/api/notifications', {
           method: 'GET',
           credentials: 'include'
         });
@@ -594,9 +628,14 @@ export default {
           const data = await res.json();
           this.notifications = data;
           this.unreadNotificationCount = data.filter(n => !n.is_read).length;
+        } else {
+          this.notifications = [];
+          this.unreadNotificationCount = 0;
         }
       } catch (err) {
         console.error('Failed to fetch notifications:', err);
+        this.notifications = [];
+        this.unreadNotificationCount = 0;
       }
     },
     async markNotificationAsRead(notificationId) {
@@ -624,6 +663,8 @@ export default {
             console.log("res", res);
             if (res.ok) {
               notification.is_read = true;
+              // Update unread count
+              this.unreadNotificationCount = this.notifications.filter(n => !n.is_read).length;
             }
           } catch (error) {
             console.error('Error marking notification as read:', error);
@@ -657,17 +698,30 @@ export default {
         this.showNotifications = false;
       }
     },
+    setupNotificationWebSocket() {
+      // Register handler for real-time notifications
+      notificationWebSocket.onNotification('profile-info', (notification) => {
+        console.log('Received real-time notification:', notification);
+        
+        // Refresh notifications and count from server to ensure accuracy
+        this.fetchNotifications();
+      });
+    },
   },
   mounted() {
-    document.addEventListener('click', this.handleNotifClose);
+    // Set up notification WebSocket
+    this.setupNotificationWebSocket();
+    
     this.fetchNotifications();
+    document.addEventListener('click', this.handleNotifClose);
   },
   beforeUnmount() {
+    // Clean up notification WebSocket
+    notificationWebSocket.removeNotificationHandler('profile-info');
     document.removeEventListener('click', this.handleNotifClose);
   }
 };
 </script>
-
 <style scoped>
 /* Layout */
 .profile-layout {
@@ -687,6 +741,11 @@ export default {
   padding: 2rem 0 1rem 0;
   border-radius: 1.5rem 0 0 1.5rem;
   box-shadow: 2px 0 16px rgba(35, 38, 58, 0.08);
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 100;
 }
 
 .sidebar-icons {
@@ -1288,10 +1347,12 @@ export default {
 
 .comment-image {
   max-width: 100%;
+  max-height: 300px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
   border-radius: 0.5rem;
-  margin-top: 0.5rem;
-  border: 1px solid #e5e7eb;
-  object-fit: cover;
+  margin-top: 0.7rem;
 }
 
 .private-message {
@@ -1356,6 +1417,7 @@ export default {
     border-radius: 0 0 1.5rem 1.5rem;
     padding: 0 1rem;
     box-shadow: 0 2px 16px rgba(35, 38, 58, 0.08);
+    position: static;
   }
 
   .sidebar-icons {

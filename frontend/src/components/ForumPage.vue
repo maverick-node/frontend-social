@@ -102,7 +102,7 @@
             Upload Image
             <input type="file" @change="handleImageUpload" accept="image/*" />
           </label>
-          <img v-if="imagePreview" :src="imagePreview" class="image-preview" alt="Preview" />
+          <img v-if="imagePreview" :src="imagePreview" class="image-preview" alt="Preview" @click="showFullImage(imagePreview)" />
           <div class="create-post-row">
             <div class="status-select">
               <select v-model="newPost.status" required>
@@ -141,7 +141,7 @@
         <div v-if="posts.length === 0" class="no-posts">No posts available. Be the first to post!</div>
         <div v-else class="post-card" v-for="post in posts" :key="post.ID">
           <div class="post-image" v-if="post.imageUrl">
-            <img :src="post.imageUrl" alt="Post image" />
+            <img :src="post.imageUrl" alt="Post image" @click="showFullImage(post.imageUrl)" />
           </div>
           <div class="post-header">
             <img class="post-author-pic" :src="post.authorAvatar" alt="Author" />
@@ -152,7 +152,9 @@
           </div>
           <h3 class="post-title">{{ post.Title }}</h3>
           <p class="post-content">{{ post.Content }}</p>
-          <img class="post-image" v-if="post.Image" :src="post.Image" alt="Post Image" />
+          <div class="post-image" v-if="post.Image" :class="post.Image ? 'post-image' : ''" @click="showFullImage(post.Image)">
+            <img :src="post.Image" alt="Post Image" />
+          </div>
           <div class="post-actions">
             <span class="icon-btn" @click="toggleComments(post)">
               <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -168,12 +170,14 @@
               <div class="comment-header">
                 <img class="comment-author-pic" :src="comment.avatar" alt="Comment Author" />
                 <div>
-                  <h5>{{ comment.Author }}</h5>
+                  <h5>{{ comment.author }}</h5>
                   <p class="comment-timestamp">{{ formatTimestamp(comment.creation_date) }}</p>
                 </div>
               </div>
               <p class="comment-content">{{ comment.comment }}</p>
-              <img class="comment-image" v-if="comment.image" :src="comment.image" alt="Comment Image" />
+              <div class="comment-image" v-if="comment.image" :class="comment.image ? 'comment-image' : ''" @click="showFullImage(comment.image)">
+                <img class="comment-img" :src="comment.image" alt="Comment Image" />
+              </div>
             </div>
             <form @submit.prevent="addComment(post)" class="comment-form">
               <div class="comment-input-row">
@@ -197,7 +201,7 @@
               <div v-if="commentImages[post.Id] && commentImages[post.Id].fileName" class="file-name-display">
                 Selected file: {{ commentImages[post.Id].fileName }}
               </div>
-              <img v-if="commentImages[post.Id] && commentImages[post.Id].preview" :src="commentImages[post.Id].preview" class="image-preview" alt="Preview" />
+              <img v-if="commentImages[post.Id] && commentImages[post.Id].preview" :src="commentImages[post.Id].preview" class="image-preview" alt="Preview" @click="showFullImage(commentImages[post.Id].preview)" />
               <div v-if="post.commentError" class="comment-error">{{ post.commentError }}</div>
             </form>
           </div>
@@ -343,10 +347,20 @@
         <div v-else class="chat-no-user">Select a user to start chatting</div>
       </div>
     </div>
+
+    <!-- Add Image Preview Modal -->
+    <div v-if="showImageModal" class="image-modal-overlay" @click="closeImageModal">
+      <div class="image-modal-content" @click.stop>
+        <img :src="selectedImage" alt="Full size image" />
+        <button class="close-modal-btn" @click="closeImageModal">&times;</button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
+import { notificationWebSocket } from '../services/notificationWebSocket.js';
+
 export default {
   props: ["showNotification"],
   name: "ForumPage",
@@ -393,15 +407,18 @@ export default {
         description: "",
         creator_id: null,
       },
-      groupMembership: {}, // Track membership status for each group
-      postsPrvMap: {}, // Added for postsprv data
-      showNotifications: false, // For notification popup
-      notifications: [], // Initialize as empty array
-      commentImages: {}, // Add this to track images for each comment
+      groupMembership: {},
+      postsPrvMap: {},
+      showNotifications: false,
+      notifications: [],
+      commentImages: {},
+      unreadNotificationCount: 0,
+      showImageModal: false,
+      selectedImage: null,
     };
   },
   beforeRouteEnter(to, from, next) {
-    fetch(`https://back-production-bb9b.up.railway.app/api/info`, {
+    fetch("https://back-production-bb9b.up.railway.app/api/info", {
       method: "GET",
       credentials: "include",
     })
@@ -419,7 +436,7 @@ export default {
   async created() {
     this.$router.push('/home');
     try {
-      const userRes = await fetch(`https://back-production-bb9b.up.railway.app/api/info`, {
+      const userRes = await fetch("https://back-production-bb9b.up.railway.app/api/info", {
         method: "GET",
         credentials: "include",
       });
@@ -451,7 +468,7 @@ export default {
   methods: {
     async fetchAllowedUsers() {
       try {
-        const res = await fetch(`https://back-production-bb9b.up.railway.app/api/postsprivacy`, {
+        const res = await fetch("https://back-production-bb9b.up.railway.app/api/postsprivacy", {
           method: "GET",
           credentials: "include",
         });
@@ -480,7 +497,7 @@ export default {
     async fetchAllUsers() {
       try {
         // Fetch all users for follow list
-        const allUsersRes = await fetch(`https://back-production-bb9b.up.railway.app/api/allusers`, {
+        const allUsersRes = await fetch("https://back-production-bb9b.up.railway.app/api/allusers", {
           method: "GET",
           credentials: "include",
         });
@@ -508,7 +525,7 @@ export default {
         }
 
         // Fetch chat users from openchat endpoint
-        const chatUsersRes = await fetch(`https://back-production-bb9b.up.railway.app/api/openchat`, {
+        const chatUsersRes = await fetch("https://back-production-bb9b.up.railway.app/api/openchat", {
           method: "GET",
           credentials: "include",
         });
@@ -522,8 +539,8 @@ export default {
               id: user.id,
               fullname: user.full_name,
               name: user.username,
-              messages: [],
-              avatar:   user.avatar 
+              messages: [], // Initialize empty messages array
+              avatar: user.avatar 
                 ? `https://back-production-bb9b.up.railway.app/uploads/${user.avatar}`
                 : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`,
             }));
@@ -540,42 +557,74 @@ export default {
       }
     },
     initializeWebSocket() {
-      this.socket = new WebSocket(`ws://${import.meta.env.VITE_API_URL.replace('http://', '')}/ws`);
+      this.socket = new WebSocket("ws://localhost:8080/ws");
 
       this.socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-if (data.type == "message" ){
-  this.showNotification("New message from " + data.username, "success");
-}
-        console.log("Received message:", data);
+        try {
+          const data = JSON.parse(event.data);
+          console.log("Received WebSocket message:", data);
 
-        // Find the user in chatUsers and add the message
-        const user = this.chatUsers.find((u) => u.name === data.username);
-        if (user) {
-          this.showNotification("New message from " + data.username, "success");
-          user.messages.push({
-            id: Date.now(),
-            text: data.message,
-            sender: "other",
-            timestamp: new Date().toISOString() // Add proper timestamp
-          });
+          // Handle error messages
+          if (data.error) {
+            console.error("WebSocket error:", data.error);
+            this.showNotification(data.error, "error");
+            return;
+          }
+
+          // Handle user list updates
+          if (data.type === "users") {
+            console.log("Received user list update:", data);
+            return;
+          }
+
+          // Handle chat messages
+          if (data.type === "message" || data.message) {  // Check for both type and message field
+            console.log("Received chat message:", data);
+            // Find the user in chatUsers and add the message
+            const user = this.chatUsers.find((u) => u.username === data.username || u.name === data.username);
+            if (user) {
+              this.showNotification(`New message from ${data.username}`, "success");
+              user.messages.push({
+                id: Date.now(),
+                text: data.message,
+                sender: "other",
+                timestamp: new Date().toISOString()
+              });
+              
+              // If this is the currently selected user, scroll to bottom
+              if (this.selectedChatUser && 
+                  (this.selectedChatUser.username === data.username || 
+                   this.selectedChatUser.name === data.username)) {
+                this.$nextTick(() => {
+                  this.scrollToBottom();
+                });
+              }
+            } else {
+              console.warn("Received message from unknown user:", data.username);
+            }
+          }
+        } catch (error) {
+          console.error("Error processing WebSocket message:", error);
         }
       };
+
       this.socket.onopen = () => {
         console.log("WebSocket connected");
       };
 
       this.socket.onerror = (error) => {
         console.error("WebSocket error:", error);
+        this.showNotification("WebSocket connection error", "error");
       };
 
       this.socket.onclose = () => {
         console.log("WebSocket disconnected");
+        this.showNotification("Disconnected from chat server", "error");
       };
     },
     async fetchPosts() {
       try {
-        const res = await fetch(`https://back-production-bb9b.up.railway.app/api/getposts`, {
+        const res = await fetch("https://back-production-bb9b.up.railway.app/api/getposts", {
           method: "GET",
           credentials: "include",
         });
@@ -600,11 +649,12 @@ if (data.type == "message" ){
             commentError: "",
           }));
         } else {
-          this.showNotification("Failed to fetch posts", "error");
-          console.error("Failed to fetch posts");
+          const errorText = await res.text();
+          this.showNotification(errorText || "Failed to fetch posts", "error");
+          console.error("Failed to fetch posts:", errorText);
         }
       } catch (error) {
-        this.showNotification("Failed to fetch posts", "error");
+        this.showNotification(error.message || "Failed to fetch posts", "error");
         console.error("Error fetching posts:", error);
       }
     },
@@ -668,7 +718,7 @@ if (data.type == "message" ){
       }
 
       try {
-        const res = await fetch(`https://back-production-bb9b.up.railway.app/api/addcomments`, {
+        const res = await fetch("https://back-production-bb9b.up.railway.app/api/addcomments", {
           method: "POST",
           credentials: "include",
           body: formData
@@ -728,7 +778,7 @@ if (data.type == "message" ){
           formData.append("image", this.image);
         }
 
-        const res = await fetch(`https://back-production-bb9b.up.railway.app/api/posts`, {
+        const res = await fetch("https://back-production-bb9b.up.railway.app/api/posts", {
           method: "POST",
           credentials: "include",
           body: formData
@@ -736,8 +786,6 @@ if (data.type == "message" ){
         console.log(this.selectedAllowedUsers);
 
         if (res.ok) {
-          this.message = "Post created successfully!";
-          // Clear all inputs
           this.newPost = {
             title: "",
             content: "",
@@ -750,7 +798,8 @@ if (data.type == "message" ){
           this.showNotification("Post created successfully!", "success");
           await this.fetchPosts();
         } else {
-          this.showNotification("Failed to create post", "error");
+          const errorText = await res.text();
+          this.showNotification("Failed to create post: "+ errorText, "error");
         }
       } catch (error) {
         this.showNotification("Failed to create post", "error");
@@ -759,7 +808,7 @@ if (data.type == "message" ){
       }
     },
     logout() {
-      fetch(`https://back-production-bb9b.up.railway.app/api/auth/logout`, {
+      fetch("https://back-production-bb9b.up.railway.app/api/auth/logout", {
         method: "POST",
         credentials: "include",
       })
@@ -773,7 +822,7 @@ if (data.type == "message" ){
           }
         })
         .catch((err) => {
-          this.showNotification("Failed to logout", "error");
+          this.showNotification("wax nta hbit rak mamlogich", "error");
           console.error("Logout error:", err);
           this.$router.push("/login");
         });
@@ -788,8 +837,7 @@ if (data.type == "message" ){
           return;
         }
 
-        // Get current user ID from the auth API
-        const userRes = await fetch(`https://back-production-bb9b.up.railway.app/api/info`, {
+        const userRes = await fetch("https://back-production-bb9b.up.railway.app/api/info", {
           method: "GET",
           credentials: "include",
         });
@@ -806,27 +854,27 @@ if (data.type == "message" ){
         let requestBody = {};
 
         if (group.member_status === 'accepted') {
-          endpoint = `https://back-production-bb9b.up.railway.app/api/removememberfromgroup`;
+          endpoint = "https://back-production-bb9b.up.railway.app/api/removememberfromgroup";
           action = "leave";
           requestBody = {
             group_id: group.id,
-            user_id: userData.id  // Include user ID for leave operation
+            user_id: userData.id  
           };
         } else if (group.member_status === 'pending') {
-          endpoint = `https://back-production-bb9b.up.railway.app/api/cancelgrouprequest`;
+          endpoint = "https://back-production-bb9b.up.railway.app/api/cancelgrouprequest";
           action = "cancel request from";
           requestBody = {
             group_id: group.id
           };
         } else if (group.member_status === 'invited') {
-          endpoint = `https://back-production-bb9b.up.railway.app/api/acceptgroupinvite`;
+          endpoint = "https://back-production-bb9b.up.railway.app/api/acceptgroupinvite";
           action = "accept invitation to";
           requestBody = {
             group_id: group.id,
             action: 'accept'
           };
         } else {
-          endpoint = `https://back-production-bb9b.up.railway.app/api/requesttojoingroup`;
+          endpoint = "https://back-production-bb9b.up.railway.app/api/requesttojoingroup";
           action = "join";
           requestBody = {
             group_id: group.id
@@ -842,7 +890,6 @@ if (data.type == "message" ){
           body: JSON.stringify(requestBody),
         });
 
-        // Update the local group status based on the action
         if (response.ok) {
           if (group.member_status === 'accepted') {
             group.member_status = null;
@@ -858,7 +905,6 @@ if (data.type == "message" ){
             this.showNotification("Join request sent successfully", "success");
           }
 
-          // Refresh groups list
           await this.fetchGroups();
         } else {
           const errorText = await response.text();
@@ -884,12 +930,12 @@ if (data.type == "message" ){
     },
     selectChatUser(user) {
       console.log("user", user.name);
-      this.selectedChatUser = user.name;
+      this.selectedChatUser = user;
       console.log("selectedChatUser", this.selectedChatUser);
-      this.fetchMessages(this.selectedChatUser);
+      this.fetchMessages(user.name);
     },
     async fetchMessages(user) {
-      console.log("Fetching messages for use11:", user);
+      console.log("Fetching messages for user:", user);
       
       try {
         const res = await fetch(
@@ -900,15 +946,14 @@ if (data.type == "message" ){
           }
         );
 
-
         if (res.ok) {
           const data = await res.json();
           console.log("Fetched messages:", data);
 
-          // Find the chat user in chatUsers array
-          const chatUser = this.chatUsers.find(u => u.name === user);
+          const chatUser = this.chatUsers.find(u => u.username === user || u.name === user);
           if (!chatUser) {
-            console.error("Chat user not found");
+            console.error("Chat user not found:", user);
+            this.showNotification("Chat user not found", "error");
             return;
           }
 
@@ -930,23 +975,33 @@ if (data.type == "message" ){
 
           // Update selectedChatUser with the found chat user
           this.selectedChatUser = chatUser;
+          
+          // Scroll to bottom after messages are loaded
+          this.$nextTick(() => {
+            this.scrollToBottom();
+          });
         } else {
-          console.error("Failed to fetch messages");
-          this.showNotification("Failed to load messages", "error");
+          const errorText = await res.text();
+          console.error("Failed to fetch messages:", errorText);
+          this.showNotification("Failed to load messages: " + errorText, "error");
         }
       } catch (error) {
         console.error("Error fetching messages:", error);
-        this.showNotification("Error loading messages", "error");
+        this.showNotification("Error loading messages: " + error.message, "error");
+      }
+    },
+    scrollToBottom() {
+      const messagesList = document.querySelector('.chat-messages-list');
+      if (messagesList) {
+        messagesList.scrollTop = messagesList.scrollHeight;
       }
     },
     sendMessage() {
       if (this.newMessage.trim() && this.selectedChatUser) {
-        // Prepare the message object
         this.currentMessage.type = "message";
-        this.currentMessage.receiver = this.selectedChatUser.name;
+        this.currentMessage.receiver = this.selectedChatUser.name; // Changed from name to username
         this.currentMessage.username = this.user.username;
         this.currentMessage.message = this.newMessage;
-
 
         // Send the message through WebSocket
         if (this.socket) {
@@ -955,24 +1010,17 @@ if (data.type == "message" ){
 
         // Add the message to the UI
         this.selectedChatUser.messages.push({
-
           text: this.newMessage,
           sender: "self",
-          timestamp:  Date.now()
-          
+          timestamp: Date.now()
         });
-  
-        
-        console.log("sasa",Date.now().toLocaleString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        }));
-        
 
         this.newMessage = "";
+        
+        // Scroll to bottom after message is added
+        this.$nextTick(() => {
+          this.scrollToBottom();
+        });
       }
     },
     formatTimestamp(timestamp) {
@@ -995,7 +1043,7 @@ if (data.type == "message" ){
     },
     async fetchGroups() {
       try {
-        const response = await fetch(`https://back-production-bb9b.up.railway.app/api/getgroups`, {
+        const response = await fetch("https://back-production-bb9b.up.railway.app/api/getgroups", {
           method: "GET",
           credentials: "include",
         });
@@ -1065,8 +1113,7 @@ if (data.type == "message" ){
     },
     async createGroup() {
       try {
-        // Get current user ID from the auth API
-        const userRes = await fetch(`https://back-production-bb9b.up.railway.app/api/info`, {
+        const userRes = await fetch("https://back-production-bb9b.up.railway.app/api/info", {
           method: "GET",
           credentials: "include",
         });
@@ -1077,9 +1124,9 @@ if (data.type == "message" ){
         }
         
         const userData = await userRes.json();
-        this.newGroup.creator_id = userData.id; // Use the correct user ID
+        this.newGroup.creator_id = userData.id; 
 
-        const response = await fetch(`https://back-production-bb9b.up.railway.app/api/creategroups`, {
+        const response = await fetch("https://back-production-bb9b.up.railway.app/api/creategroups", {
           method: "POST",
           credentials: "include",
           headers: {
@@ -1091,7 +1138,6 @@ if (data.type == "message" ){
         if (response.ok) {
           this.showNotification("Group created successfully", "success");
           const data = await response.json();
-          // Add the new group to the list
           this.groups.push({
             id: data.id,
             name: data.title,
@@ -1117,7 +1163,7 @@ if (data.type == "message" ){
     },
     async fetchPostsPrv() {
       try {
-        const res = await fetch(`https://back-production-bb9b.up.railway.app/api/postsprv`, {
+        const res = await fetch("https://back-production-bb9b.up.railway.app/api/postsprv", {
           method: "GET",
           credentials: "include",
         });
@@ -1145,7 +1191,6 @@ if (data.type == "message" ){
     handleNotifClick() {
       this.showNotifications = !this.showNotifications;
       if (this.showNotifications) {
-        // Mark all unread notifications as read when opening the popup
         this.notifications.forEach(notif => {
           if (!notif.is_read) {
             this.markNotificationAsRead(notif.id);
@@ -1166,7 +1211,7 @@ if (data.type == "message" ){
     },
     async fetchNotifications() {
       try {
-        const res = await fetch(`https://back-production-bb9b.up.railway.app/api/notifications`, {
+        const res = await fetch("https://back-production-bb9b.up.railway.app/api/notifications", {
           method: "GET",
           credentials: "include",
         });
@@ -1174,7 +1219,6 @@ if (data.type == "message" ){
           const data = await res.json();
           console.log("sassasaassa", data);
 
-          // Ensure data is an array and map it safely
           this.notifications = Array.isArray(data)
             ? data.map(notif => ({
               id: notif.id,
@@ -1185,12 +1229,17 @@ if (data.type == "message" ){
               is_read: notif.is_read || false
             }))
             : [];
+          
+          // Update unread count
+          this.unreadNotificationCount = this.notifications.filter(n => !n.is_read).length;
         } else {
           this.notifications = [];
+          this.unreadNotificationCount = 0;
         }
       } catch (e) {
         console.error('Error fetching notifications:', e);
         this.notifications = [];
+        this.unreadNotificationCount = 0;
       }
     },
     async markNotificationAsRead(notificationId) {
@@ -1219,6 +1268,8 @@ if (data.type == "message" ){
             console.log("res", res);
             if (res.ok) {
               notification.is_read = true;
+              // Update unread count
+              this.unreadNotificationCount = this.notifications.filter(n => !n.is_read).length;
             }
           } catch (error) {
             console.error('Error marking notification as read:', error);
@@ -1231,6 +1282,20 @@ if (data.type == "message" ){
     handleImageUpload(event, postId = null) {
       const file = event.target.files[0];
       if (file) {
+      const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+      if (!allowedTypes.includes(file.type)) {
+          this.showNotification('Only JPEG, PNG, and GIF images are allowed', 'error');
+          event.target.value = ''; // Clear the input
+          return;
+        }
+        // Validate file size (2MB limit)
+        const maxSize = 2 * 1024 * 1024; // 2 MB in bytes
+        if (file.size > maxSize) {
+          this.showNotification('Image file size must be less than 2MB', 'error');
+          event.target.value = ''; // Clear the input
+          return;
+        }
+
         if (postId) {
           // Handle comment image
           this.commentImages[postId] = {
@@ -1290,7 +1355,7 @@ if (data.type == "message" ){
     },
     async fetchChatUsers() {
       try {
-        const chatUsersRes = await fetch(`https://back-production-bb9b.up.railway.app/api/openchat`, {
+        const chatUsersRes = await fetch("https://back-production-bb9b.up.railway.app/api/openchat", {
           method: "GET",
           credentials: "include",
         });
@@ -1323,20 +1388,58 @@ if (data.type == "message" ){
     async handleChatClick() {
       if (!this.isChatExpanded) {
         await this.fetchChatUsers();
+        this.selectedChatUser = null; // Reset selected user when opening chat
       }
       this.isChatExpanded = !this.isChatExpanded;
     },
+    setupNotificationWebSocket() {
+      // Register handler for real-time notifications
+      notificationWebSocket.onNotification('forum-page', (notification) => {
+        console.log('Received real-time notification:', notification);
+        
+        // Refresh notifications and count from server to ensure accuracy
+        this.fetchNotifications();
+      });
+    },
+    async fetchNotificationCount() {
+      try {
+        const res = await fetch('https://back-production-bb9b.up.railway.app/api/notifications', {
+          method: 'GET',
+          credentials: 'include'
+        });
+        if (res.ok) {
+          const data = await res.json();
+          // Only update the count, don't store notifications unless popup is open
+          this.unreadNotificationCount = (data || []).filter(n => !n.is_read).length;
+        }
+      } catch (err) {
+        console.error('Failed to fetch notification count:', err);
+      }
+    },
+    showFullImage(imageUrl) {
+      this.selectedImage = imageUrl;
+      this.showImageModal = true;
+    },
+    closeImageModal() {
+      this.showImageModal = false;
+      this.selectedImage = null;
+    },
   },
   mounted() {
+    // Set up notification WebSocket
+    this.setupNotificationWebSocket();
+    
+    this.fetchPosts();
+    this.fetchNotifications();
+    this.fetchPostsPrv();
     document.addEventListener('click', this.handleNotifClose);
   },
   beforeUnmount() {
+    // Clean up notification WebSocket
+    notificationWebSocket.removeNotificationHandler('forum-page');
     document.removeEventListener('click', this.handleNotifClose);
   },
   computed: {
-    unreadNotificationCount() {
-      return this.notifications.filter(notif => !notif.is_read).length;
-    }
   },
 };
 </script>
@@ -1360,6 +1463,11 @@ if (data.type == "message" ){
   padding: 2rem 0 1rem 0;
   border-radius: 1.5rem 0 0 1.5rem;
   box-shadow: 2px 0 16px rgba(35, 38, 58, 0.08);
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 100;
 }
 
 .sidebar-icons {
@@ -1374,14 +1482,15 @@ if (data.type == "message" ){
   width: 48px;
   height: 48px;
   display: flex;
+  
   align-items: center;
   justify-content: center;
   border-radius: 1rem;
+  
   color: #fff;
   font-size: 1.5rem;
   opacity: 0.7;
   cursor: pointer;
-  transition: background 0.2s, opacity 0.2s;
 }
 
 .sidebar-icon.active,
@@ -1397,6 +1506,7 @@ if (data.type == "message" ){
   flex-direction: column;
   padding: 2rem 2rem 2rem 1.5rem;
   min-width: 0;
+  margin-left: 70px; /* Add margin to account for fixed sidebar */
 }
 
 /* Top Avatar Bar */
@@ -1625,52 +1735,64 @@ if (data.type == "message" ){
 /* Posts Grid */
 .posts-grid {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
+  flex-direction: column;
+  gap: 2rem;
   margin-top: 1.5rem;
-  align-items: flex-start; /* Ensure items align at the top */
-  justify-content: center; /* Center items if there's extra horizontal space */
+  width: 100%;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .post-card {
   background: #fff;
   border-radius: 1.25rem;
   box-shadow: 0 4px 24px rgba(35, 38, 58, 0.08);
-  padding: 1.2rem 1.2rem 1rem 1.2rem;
+  padding: 1.5rem 1.8rem 1.2rem 1.8rem;
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
-  flex: 0 0 calc(33.33% - 1rem); /* Prevent growing/shrinking, base width for 3 columns */
-  min-width: 280px; /* Allow shrinking down to this */
+  gap: 1rem;
+  width: 100%;
   overflow-wrap: break-word;
   word-wrap: break-word;
   word-break: break-word;
-  height: auto; /* Ensure height is based on content */
+  height: auto;
+}
+
+.post-image {
+  width: 100%;
+  max-height: 400px;
+  overflow: hidden;
+  border-radius: 0.8rem;
+  margin-bottom: 0.7rem;
+  display: flex;
+  border-radius: 0.5rem;
+  align-items: center;
+  justify-content: center;
 }
 
 .post-image img {
   width: 100%;
-  height: 180px;
-  object-fit: cover;
+  height: 100%;
+  object-fit: contain;
   border-radius: 0.8rem;
-  margin-bottom: 0.7rem;
 }
 
 .post-header {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
+  gap: 1rem;
 }
 
 .post-author-pic {
-  width: 36px;
-  height: 36px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   object-fit: cover;
 }
 
 .post-title {
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   color: #23263a;
   font-weight: 600;
   margin: 0.2rem 0;
@@ -1678,23 +1800,14 @@ if (data.type == "message" ){
 
 .post-content {
   color: #4b5563;
-  font-size: 0.98rem;
+  font-size: 1.1rem;
   margin-bottom: 0.2rem;
   word-wrap: break-word;
   white-space: pre-wrap;
   overflow-wrap: break-word;
   max-width: 100%;
-  line-height: 1.5;
-  height: auto; /* Allow height to adjust to content */
-}
-
-.category-tag {
-  background: #e0e7ff;
-  color: #4f46e5;
-  padding: 0.2rem 0.6rem;
-  border-radius: 0.4rem;
-  font-size: 0.8rem;
-  font-weight: 500;
+  line-height: 1.6;
+  height: auto;
 }
 
 .post-actions {
@@ -2099,6 +2212,9 @@ if (data.type == "message" ){
 }
 
 .comment {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   background: #fff;
   border-radius: 0.7rem;
   padding: 1rem;
@@ -2150,9 +2266,11 @@ if (data.type == "message" ){
 .comment-image {
   max-width: 100%;
   max-height: 300px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
   border-radius: 0.5rem;
   margin-top: 0.7rem;
-  border: 1px solid #e5e7eb;
 }
 
 .comment-form {
@@ -2242,6 +2360,17 @@ if (data.type == "message" ){
   background: #fee2e2;
   border-radius: 0.5rem;
   border: 1px solid #fecaca;
+}
+
+.comment-img {
+  max-width: 100%;
+  max-height: 300px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 0.5rem;
+  margin-top: 0.7rem;
+  border: 1px solid #e5e7eb;
 }
 
 .group-clickable {
@@ -2396,6 +2525,26 @@ if (data.type == "message" ){
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+  scroll-behavior: smooth;
+  padding-right: 0.5rem;
+}
+
+.chat-messages-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.chat-messages-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.chat-messages-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .chat-msg {
@@ -2627,12 +2776,6 @@ if (data.type == "message" ){
   display: inline-block;
 }
 
-.comment-image {
-  max-width: 100%;
-  border-radius: 0.5rem;
-  margin-top: 0.5rem;
-}
-
 .create-post-form input[type="file"] {
   display: none;
 }
@@ -2662,11 +2805,15 @@ if (data.type == "message" ){
 }
 
 .create-post-form .image-preview {
-  max-width: 200px;
-  max-height: 200px;
+  max-width: 300px;
+  max-height: 300px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
   border-radius: 0.75rem;
   margin-top: 0.5rem;
   display: block;
+  background: #f3f4f8;
 }
 
 .file-name-display {
@@ -2679,91 +2826,268 @@ if (data.type == "message" ){
   display: inline-block;
 }
 
+.post-image {
+  object-fit: cover;
+  width: fit-content;
+  height: 300px;
+}
 
 @media (max-width: 768px) {
   .post-card {
-    flex-basis: 100%; /* Full width on mobile */
-    max-width: 100%;
+    width: 100%;
+  }
+  .post-image img {
+    height: 250px;
   }
 }
 
 @media (max-width: 900px) {
+  .posts-grid {
+    max-width: 100%;
+    padding: 0 1rem;
+  }
+}
+
+/* Remove the grid layout for larger screens */
+@media (min-width: 768px) {
+  .posts-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
   .forum-layout {
     flex-direction: column;
   }
 
   .sidebar {
+    width: 100%;
     flex-direction: row;
-    width: 100vw;
-    height: 60px;
-    border-radius: 0 0 1.5rem 1.5rem;
-    padding: 0 1rem;
-    box-shadow: 0 2px 16px rgba(35, 38, 58, 0.08);
+    padding: 1rem;
+    border-radius: 0;
+    justify-content: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: auto;
+    height: auto;
+    z-index: 1000;
   }
 
   .sidebar-icons {
     flex-direction: row;
-    gap: 2rem;
-    width: 100%;
     justify-content: center;
+    gap: 1.5rem;
+    position: relative; /* Change from fixed to relative */
   }
 
   .main-area {
-    padding: 1rem 0.5rem;
+    margin-left: 0; /* Remove margin on mobile */
+    margin-top: 80px; /* Add margin for fixed top sidebar */
+    padding: 1rem;
   }
 
   .rightbar {
-    width: 100vw;
-    border-radius: 0 0 1.5rem 1.5rem;
-    box-shadow: 0 -2px 16px rgba(35, 38, 58, 0.08);
-    padding: 1.2rem 0.7rem;
+    width: 100%;
+    border-radius: 0;
     margin-top: 1rem;
-  }
-}
-
-@media (max-width: 600px) {
-  .main-area {
-    padding: 0.5rem 0.2rem;
-  }
-
-  .create-post-card {
-    flex-direction: column;
-    padding: 1rem 0.7rem;
-    gap: 0.7rem;
   }
 
   .posts-grid {
-    grid-template-columns: 1fr;
+    max-width: 100%;
+  }
+
+  .chat-fab {
+    bottom: 1.5rem;
+    right: 1.5rem;
+  }
+
+  .notif-popup {
+    left: 50%;
+    transform: translateX(-50%);
+    top: 80px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar-icons {
     gap: 1rem;
   }
 
-  .rightbar {
-    padding: 0.7rem 0.2rem;
+  .sidebar-icon {
+    width: 40px;
+    height: 40px;
   }
 
-  .comment-input-row {
+  .create-post-card {
+    padding: 1rem;
+  }
+
+  .post-card {
+    padding: 1rem;
+  }
+
+  .post-image img {
+    height: 200px;
+  }
+
+  .post-title {
+    font-size: 1.2rem;
+  }
+
+  .post-content {
+    font-size: 1rem;
+  }
+
+  .chat-modal {
+    width: 95vw;
+    height: 90vh;
+  }
+
+  .groups-section,
+  .users-section {
+    height: 250px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar-icons {
+    gap: 0.8rem;
+  }
+
+  .sidebar-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .post-header {
+    gap: 0.7rem;
+  }
+
+  .post-author-pic {
+    width: 40px;
+    height: 40px;
+  }
+
+  .post-image img {
+    height: 180px;
+  }
+
+  .create-post-form input,
+  .create-post-form textarea {
+    font-size: 0.95rem;
+  }
+
+  .chat-modal {
+    padding: 1rem;
+  }
+
+  .chat-messages-list {
+    max-height: 150px;
+  }
+}
+
+/* Ensure content is properly centered on mobile */
+@media (max-width: 1024px) {
+  .main-area {
+    display: flex;
     flex-direction: column;
-    align-items: stretch;
-    gap: 0.5rem;
+    align-items: center;
   }
 
-  .comment-form .file-upload-label {
+  .avatar-bar {
     width: 100%;
-    justify-content: center;
+    max-width: 900px;
   }
 
-  .comment-submit-btn {
+  .create-post-card {
     width: 100%;
-    padding: 0.7rem;
+    max-width: 900px;
   }
 }
 
-@media (min-width: 768px) {
-  .posts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-  }
+/* Image Modal Styles */
+.image-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5000;
+  animation: fadeIn 0.2s ease;
+  padding: 2rem;
 }
 
+.image-modal-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 85vh;
+  animation: zoomIn 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f8;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.image-modal-content img {
+  max-width: 100%;
+  max-height: 85vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.close-modal-btn {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: opacity 0.2s;
+  z-index: 1;
+}
+
+.close-modal-btn:hover {
+  opacity: 0.8;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zoomIn {
+  from { transform: scale(0.95); }
+  to { transform: scale(1); }
+}
+
+/* Add cursor pointer to clickable images */
+.post-image img,
+.comment-image,
+.create-post-form .image-preview {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.post-image img:hover,
+.comment-image:hover,
+.create-post-form .image-preview:hover {
+  opacity: 0.9;
+}
 </style>
