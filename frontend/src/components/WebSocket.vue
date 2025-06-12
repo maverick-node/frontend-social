@@ -31,7 +31,7 @@ export default {
     
     mounted() {
         
-        this.socket = new WebSocket("ws://http://social-net.duckdns.org/ws");
+        this.socket = new WebSocket("ws://http://20.56.138.63:8080/ws");
 
         this.socket.onmessage = (event) => {
             const data = JSON.parse(event.data);

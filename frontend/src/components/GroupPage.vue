@@ -205,9 +205,9 @@
                   </div>
                   <p class="comment-content">{{ comment.content }}</p>
                   <div v-if="comment.image" class="comment-image">
-                    <img :src="`http://social-net.duckdns.org/uploads/${comment.image}`" alt="Comment Image"
+                    <img :src="`http://20.56.138.63:8080/uploads/${comment.image}`" alt="Comment Image"
                       style="max-width: 200px; max-height: 200px; margin-top: 8px; cursor:pointer"
-                      @click="openImageModal(`http://social-net.duckdns.org/uploads/${comment.image}`)" />
+                      @click="openImageModal(`http://20.56.138.63:8080/uploads/${comment.image}`)" />
                   </div>
                 </div>
                 <form @submit.prevent="addComment(post)" class="comment-form" enctype="multipart/form-data">
@@ -535,7 +535,7 @@ export default {
     };
   },
   beforeRouteEnter(to, from, next) {
-    fetch("http://social-net.duckdns.org/api/info", {
+    fetch("http://20.56.138.63:8080/api/info", {
       method: "GET",
       credentials: "include",
     })
@@ -588,7 +588,7 @@ export default {
     async fetchGroupDetails(groupId) {
       try {
         const response = await fetch(
-          `http://social-net.duckdns.org/api/getgroups?id=${groupId}`,
+          `http://20.56.138.63:8080/api/getgroups?id=${groupId}`,
           {
             method: "GET",
             credentials: "include",
@@ -631,7 +631,7 @@ export default {
     },
     async fetchNotifications() {
       try {
-        const res = await fetch("http://social-net.duckdns.org/api/notifications", {
+        const res = await fetch("http://20.56.138.63:8080/api/notifications", {
           method: "GET",
           credentials: "include",
         });
@@ -667,7 +667,7 @@ export default {
         
         setTimeout(async () => {
           try {
-            const res = await fetch(`http://social-net.duckdns.org/api/markasread`, {
+            const res = await fetch(`http://20.56.138.63:8080/api/markasread`, {
               method: 'POST',
               credentials: 'include',
               headers: {
@@ -692,7 +692,7 @@ export default {
     async checkMembership(groupId) {
       try {
         const response = await fetch(
-          `http://social-net.duckdns.org/api/checkmem?group_id=${groupId}`,
+          `http://20.56.138.63:8080/api/checkmem?group_id=${groupId}`,
           {
             method: "GET",
             credentials: "include",
@@ -735,7 +735,7 @@ export default {
             this.chatMessages = data
               .map(msg => ({
                 ...msg,
-                authorAvatar: msg.avatar ? `http://social-net.duckdns.org/uploads/${msg.avatar}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.username}`,
+                authorAvatar: msg.avatar ? `http://20.56.138.63:8080/uploads/${msg.avatar}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.username}`,
                 created_at: new Date(msg.created_at)
               }))
               .sort((a, b) => a.created_at - b.created_at);
@@ -751,7 +751,7 @@ export default {
           if (data && data.username && data.content) {
             this.chatMessages.push({
               ...data,
-              authorAvatar: data.avatar ? `http://social-net.duckdns.org/uploads/${data.avatar}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.username}`,
+              authorAvatar: data.avatar ? `http://20.56.138.63:8080/uploads/${data.avatar}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.username}`,
               created_at: new Date(data.created_at)
             });
 
@@ -823,7 +823,7 @@ export default {
     },
     async leaveGroup() {
       try {
-        const userRes = await fetch("http://social-net.duckdns.org/api/info", {
+        const userRes = await fetch("http://20.56.138.63:8080/api/info", {
           method: "GET",
           credentials: "include",
         });
@@ -836,7 +836,7 @@ export default {
         const userData = await userRes.json();
 
         const response = await fetch(
-          "http://social-net.duckdns.org/api/removememberfromgroup",
+          "http://20.56.138.63:8080/api/removememberfromgroup",
           {
             method: "POST",
             credentials: "include",
@@ -896,7 +896,7 @@ export default {
         }
 
         const response = await fetch(
-          `http://social-net.duckdns.org/api/events/add?group_id=${this.$route.params.id}`,
+          `http://20.56.138.63:8080/api/events/add?group_id=${this.$route.params.id}`,
           {
             method: "POST",
             credentials: "include",
@@ -932,7 +932,7 @@ export default {
     async respondToEvent(eventId, response) {
       try {
         const res = await fetch(
-          `http://social-net.duckdns.org/api/events/join?event_id=${eventId}&response=${response}`,
+          `http://20.56.138.63:8080/api/events/join?event_id=${eventId}&response=${response}`,
           {
             method: "POST",
             credentials: "include",
@@ -974,7 +974,7 @@ export default {
     async fetchEvents(group_id) {
       try {
         const response = await fetch(
-          `http://social-net.duckdns.org/api/events?id=${group_id}`,
+          `http://20.56.138.63:8080/api/events?id=${group_id}`,
           {
             credentials: "include",
           }
@@ -1018,7 +1018,7 @@ export default {
     async fetchPosts(group_id) {
       try {
         const response = await fetch(
-          `http://social-net.duckdns.org/api/groupposts?group_id=${group_id}`,
+          `http://20.56.138.63:8080/api/groupposts?group_id=${group_id}`,
           {
             credentials: "include",
           }
@@ -1033,7 +1033,7 @@ export default {
               ...post,
               id: post.id,
               author: post.author,
-              authorAvatar: post.avatar ? `http://social-net.duckdns.org/uploads/${post.avatar}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author}`,
+              authorAvatar: post.avatar ? `http://20.56.138.63:8080/uploads/${post.avatar}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author}`,
               image: post.image ? post.image : null,
               created_at: post.creation_date,
               comments: [],
@@ -1057,7 +1057,7 @@ export default {
       const groupId = this.$route.params.id;
 
       try {
-        const response = await fetch(`http://social-net.duckdns.org/api/groupposts/add?group_id=${groupId}`, {
+        const response = await fetch(`http://20.56.138.63:8080/api/groupposts/add?group_id=${groupId}`, {
           method: "POST",
           credentials: "include",
           headers: {
@@ -1117,7 +1117,7 @@ export default {
         formData.append("image", post.commentImage);
       }
       try {
-        const res = await fetch("http://social-net.duckdns.org/api/groupcomments/add", {
+        const res = await fetch("http://20.56.138.63:8080/api/groupcomments/add", {
           method: "POST",
           credentials: "include",
           body: formData,
@@ -1166,7 +1166,7 @@ export default {
     async fetchComments(post) {
       try {
         const res = await fetch(
-          `http://social-net.duckdns.org/api/groupcomments?group_post_id=${post.id}`,
+          `http://20.56.138.63:8080/api/groupcomments?group_post_id=${post.id}`,
           {
             method: "GET",
             credentials: "include",
@@ -1177,7 +1177,7 @@ export default {
           post.comments = data.map((comment) => ({
             ...comment,
             authorAvatar: comment.avatar
-              ? `http://social-net.duckdns.org/uploads/${comment.avatar}`
+              ? `http://20.56.138.63:8080/uploads/${comment.avatar}`
               : `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.author}`,
             created_at: comment.creation_date,
             image: comment.image
@@ -1211,7 +1211,7 @@ export default {
       this.$router.push('/mygroups');
     },
     logout() {
-      fetch('http://social-net.duckdns.org/api/logout', {
+      fetch('http://20.56.138.63:8080/api/logout', {
         method: 'POST',
         credentials: 'include'
       })
@@ -1238,7 +1238,7 @@ export default {
 
       try {
         const response = await fetch(
-          `http://social-net.duckdns.org/api/GetInvitations?group_id=${this.group.id}`,
+          `http://20.56.138.63:8080/api/GetInvitations?group_id=${this.group.id}`,
           {
             credentials: "include",
           }
@@ -1260,8 +1260,8 @@ export default {
     async handleMemberRequest(userId, action) {
       try {
         const endpoint = action === 'accept'
-          ? 'http://social-net.duckdns.org/api/acceptgroupmember'
-          : 'http://social-net.duckdns.org/api/removememberfromgroup';
+          ? 'http://20.56.138.63:8080/api/acceptgroupmember'
+          : 'http://20.56.138.63:8080/api/removememberfromgroup';
 
         const response = await fetch(endpoint, {
           method: 'POST',
@@ -1296,8 +1296,8 @@ export default {
     async handleInvitation(action) {
       try {
         const endpoint = action === 'accept'
-          ? 'http://social-net.duckdns.org/api/acceptgroupinvite'
-          : 'http://social-net.duckdns.org/api/declinegroupinvite';
+          ? 'http://20.56.138.63:8080/api/acceptgroupinvite'
+          : 'http://20.56.138.63:8080/api/declinegroupinvite';
 
         const response = await fetch(endpoint, {
           method: 'POST',
@@ -1337,7 +1337,7 @@ export default {
     },
     async fetchAllUsers() {
       try {
-        const response = await fetch("http://social-net.duckdns.org/api/allusers", {
+        const response = await fetch("http://20.56.138.63:8080/api/allusers", {
           credentials: "include",
         });
         if (response.ok) {
@@ -1348,7 +1348,7 @@ export default {
             id: user.id,
             username: user.username,
             avatar: user.avatar
-              ? `http://social-net.duckdns.org/uploads/${user.avatar}`
+              ? `http://20.56.138.63:8080/uploads/${user.avatar}`
               : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`,
             invited: false
           }));
@@ -1368,7 +1368,7 @@ export default {
 
       
       try {
-        const response = await fetch(`http://social-net.duckdns.org/api/groupmembers/status?group_id=${this.group.id}`, {
+        const response = await fetch(`http://20.56.138.63:8080/api/groupmembers/status?group_id=${this.group.id}`, {
           credentials: "include",
         });
         if (response.ok) {
@@ -1400,7 +1400,7 @@ export default {
 
     async inviteUser(user) {
       try {
-        const response = await fetch("http://social-net.duckdns.org/api/addmembertogroup", {
+        const response = await fetch("http://20.56.138.63:8080/api/addmembertogroup", {
           method: "POST",
           credentials: "include",
           headers: {
@@ -1422,7 +1422,7 @@ export default {
 
           
           try {
-            await fetch("http://social-net.duckdns.org/api/notifications", {
+            await fetch("http://20.56.138.63:8080/api/notifications", {
               method: "POST",
               credentials: "include",
               headers: {
@@ -1451,7 +1451,7 @@ export default {
 
     async fetchGroupMembers() {
       try {
-        const response = await fetch(`http://social-net.duckdns.org/api/groupmembers?group_id=${this.group.id}`, {
+        const response = await fetch(`http://20.56.138.63:8080/api/groupmembers?group_id=${this.group.id}`, {
           credentials: "include",
         });
         if (response.ok) {

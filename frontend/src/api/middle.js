@@ -1,6 +1,6 @@
 export async function CheckLogin() {
         try {
-          const response = await fetch('http://social-net.duckdns.org/middle', {
+          const response = await fetch('http://20.56.138.63:8080/middle', {
             method: 'GET',
             credentials: 'include',
           });

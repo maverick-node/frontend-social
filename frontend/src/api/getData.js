@@ -1,5 +1,5 @@
 export async function getData() {
-    return fetch('http://social-net.duckdns.org//api/info', {
+    return fetch('http://20.56.138.63:8080//api/info', {
         method: 'GET',
         credentials: 'include',
     })
