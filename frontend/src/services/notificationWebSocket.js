@@ -23,7 +23,7 @@ function connectNotificationWebSocket() {
   isConnecting = true;
 
   try {
-    notificationSocket = new WebSocket("ws://localhost:8080/ws/notifications");
+    notificationSocket = new WebSocket("ws://20.56.138.63:8080/ws/notifications");
 
     notificationSocket.onopen = function (event) {
       console.log("Connected to notification WebSocket");

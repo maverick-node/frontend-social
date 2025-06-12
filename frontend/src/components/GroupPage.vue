@@ -719,7 +719,7 @@ export default {
     },
     initializeWebSocket(groupId) {
       this.socket = new WebSocket(
-        `ws://localhost:8080/ws/group/${groupId}`
+        `ws://20.56.138.63:8080/ws/group/${groupId}`
       );
 
       this.socket.onopen = () => {

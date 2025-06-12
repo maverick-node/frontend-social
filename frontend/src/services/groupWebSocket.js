@@ -45,7 +45,7 @@ async function connect(groupId) {
     return;
   }
 
-  const wsUrl = `ws://localhost:8080/ws/group/${groupId}`;
+  const wsUrl = `ws://20.56.138.63:8080/ws/group/${groupId}`;
   socket = new WebSocket(wsUrl);
 
   socket.onopen = () => {
