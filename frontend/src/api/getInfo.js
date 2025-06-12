@@ -1,7 +1,7 @@
 export var UserID = null;
 export async function fetchInfo() {
   try {
-    const response = await fetch("http://20.56.138.63:8080/api/info", {
+    const response = await fetch("https://5512-20-56-138-63.ngrok-free.app/api/info", {
       method: "GET",
       credentials: "include",
     });
@@ -23,7 +23,7 @@ export async function fetchInfo() {
 
 export async function CheckLogin() {
   try {
-    const response = await fetch("http://20.56.138.63:8080/middle", {
+    const response = await fetch("https://5512-20-56-138-63.ngrok-free.app/middle", {
       method: "GET",
       credentials: "include",
     });

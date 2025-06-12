@@ -40,7 +40,7 @@ export default {
   methods: {
     async handleLogin() {
       try {
-        const response = await fetch('http://20.56.138.63:8080/api/auth/login', {
+        const response = await fetch('https://5512-20-56-138-63.ngrok-free.app/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
