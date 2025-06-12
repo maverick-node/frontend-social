@@ -23,7 +23,7 @@
 </template>
 
 <script>
-// import router from '@/router';
+
 
 
 
@@ -40,7 +40,7 @@ export default {
   methods: {
     async handleLogin() {
       try {
-        const response = await fetch('https://back-production-bb9b.up.railway.app/api/auth/login', {
+        const response = await fetch('http://20.56.138.63:8080/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -56,7 +56,7 @@ export default {
 
         const data = await response.json();
         console.log("dataaaaaaaA1", data);
-        // Store the user ID in localStorage
+        
         localStorage.setItem('xyz', data.xyz);
         this.$router.push('/home');
       } catch (error) {

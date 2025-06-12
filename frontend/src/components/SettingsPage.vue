@@ -132,7 +132,7 @@ export default {
   },
 
   beforeRouteEnter(to, from, next) {
-    fetch("https://back-production-bb9b.up.railway.app/api/info", {
+    fetch("http://20.56.138.63:8080/api/info", {
       method: "GET",
       credentials: "include",
     })
@@ -151,7 +151,7 @@ export default {
   methods: {
     async updatePrivacy() {
       try {
-        const res = await fetch(`https://back-production-bb9b.up.railway.app/api/updateprivacy`, {
+        const res = await fetch(`http://20.56.138.63:8080/api/updateprivacy`, {
           method: 'POST',
           credentials: 'include',
           body: JSON.stringify({
@@ -170,7 +170,7 @@ export default {
     },
     async fetchInvitations() {
       try {
-        const res = await fetch(`https://back-production-bb9b.up.railway.app/api/getinvitationsfollow`, {
+        const res = await fetch(`http://20.56.138.63:8080/api/getinvitationsfollow`, {
           method: 'GET',
           credentials: 'include'
         });
@@ -183,7 +183,7 @@ export default {
     },
     async acceptInvitation(invitationId) {
       try {
-        const res = await fetch(`https://back-production-bb9b.up.railway.app/api/accepteinvi`, {
+        const res = await fetch(`http://20.56.138.63:8080/api/accepteinvi`, {
           method: 'POST',
           credentials: 'include',
           body: JSON.stringify({
@@ -201,7 +201,7 @@ export default {
 
     async rejectInvitation(invitationId) {
       try {
-        const res = await fetch(`https://back-production-bb9b.up.railway.app/api/followers?action=rejectInvitation&profileUser=${invitationId}`, {
+        const res = await fetch(`http://20.56.138.63:8080/api/followers?action=rejectInvitation&profileUser=${invitationId}`, {
           method: 'POST',
           credentials: 'include'
         });
@@ -213,7 +213,7 @@ export default {
       }
     },
     async checkprivacy() {
-      const res = await fetch("https://back-production-bb9b.up.railway.app/api/checkmyprivacy", {
+      const res = await fetch("http://20.56.138.63:8080/api/checkmyprivacy", {
         credentials: 'include',
       })
       const data = await res.json()
@@ -226,7 +226,7 @@ export default {
       }
     },
     logout() {
-      fetch('https://back-production-bb9b.up.railway.app/api/auth/logout', {
+      fetch('http://20.56.138.63:8080/api/auth/logout', {
         method: 'POST',
         credentials: 'include'
       })
@@ -255,7 +255,7 @@ export default {
     },
     async fetchNotifications() {
       try {
-        const res = await fetch('https://back-production-bb9b.up.railway.app/api/notifications', {
+        const res = await fetch('http://20.56.138.63:8080/api/notifications', {
           method: 'GET',
           credentials: 'include'
         });
@@ -277,14 +277,14 @@ export default {
       console.log(notificationId);
 
       try {
-        // Find the notification first
+        
         const notification = this.notifications.find(n => n.id === notificationId);
         if (!notification) return;
 
-        // Set a timeout to mark as read after 3 seconds
+        
         setTimeout(async () => {
           try {
-            const res = await fetch(`https://back-production-bb9b.up.railway.app/api/markasread`, {
+            const res = await fetch(`http://20.56.138.63:8080/api/markasread`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
@@ -298,13 +298,13 @@ export default {
             console.log("res", res);
             if (res.ok) {
               notification.is_read = true;
-              // Update unread count
+              
               this.unreadNotificationCount = this.notifications.filter(n => !n.is_read).length;
             }
           } catch (error) {
             console.error('Error marking notification as read:', error);
           }
-        }, 300); // 3 seconds delay
+        }, 300); 
       } catch (error) {
         console.error('Error marking notification as read:', error);
       }
@@ -334,17 +334,17 @@ export default {
       }
     },
     setupNotificationWebSocket() {
-      // Register handler for real-time notifications
+      
       notificationWebSocket.onNotification('settings-page', (notification) => {
         console.log('Received real-time notification:', notification);
         
-        // Refresh notifications and count from server to ensure accuracy
+        
         this.fetchNotifications();
       });
     },
   },
   async created() {
-    const userRes = await fetch("https://back-production-bb9b.up.railway.app/api/info", {
+    const userRes = await fetch("http://20.56.138.63:8080/api/info", {
       method: "GET",
       credentials: "include",
     });
@@ -355,14 +355,14 @@ export default {
     await this.fetchInvitations();
   },
   mounted() {
-    // Set up notification WebSocket
+    
     this.setupNotificationWebSocket();
     
     this.fetchNotifications();
     document.addEventListener('click', this.handleNotifClose);
   },
   beforeUnmount() {
-    // Clean up notification WebSocket
+    
     notificationWebSocket.removeNotificationHandler('settings-page');
     document.removeEventListener('click', this.handleNotifClose);
   }

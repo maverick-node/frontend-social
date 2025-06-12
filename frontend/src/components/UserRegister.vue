@@ -57,7 +57,7 @@ export default {
       },
       avatarFile: null,
       fields: {
-        // username: { label: "Username", type: "text", placeholder: "username" },
+        
         email: {
           label: "Email",
           type: "email",
@@ -102,9 +102,9 @@ export default {
         errors.push("Invalid email format.");
       }
 
-      // if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(this.form.password)) {
-      //   errors.push("Password must be at least 8 characters, including letters and numbers.");
-      // }
+      
+      
+      
 
       if (!/^[a-zA-Z]{1,30}$/.test(this.form.firstname)) {
         errors.push("First name must contain only letters.");
@@ -114,7 +114,7 @@ export default {
         errors.push("Last name must contain only letters.");
       }
 
-      // Date of birth validation
+      
       if (!this.form.birthday) {
         errors.push("Date of birth is required.");
       } else {
@@ -123,21 +123,21 @@ export default {
         const minAge = 13;
         const maxAge = 100;
         
-        // Check if date is valid
+        
         if (isNaN(birthDate.getTime())) {
           errors.push("Invalid date of birth format.");
         } else {
-          // Check if date is in the future
+          
           if (birthDate > today) {
             errors.push("Date of birth cannot be in the future.");
           }
           
-          // Calculate age
+          
           const age = today.getFullYear() - birthDate.getFullYear();
           const monthDiff = today.getMonth() - birthDate.getMonth();
           const dayDiff = today.getDate() - birthDate.getDate();
           
-          // Adjust age if birthday hasn't occurred this year
+          
           const actualAge = monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? age - 1 : age;
           
           if (actualAge < minAge) {
@@ -172,14 +172,14 @@ export default {
         return;
       }
       const formData = new FormData();
-      // Add avatar
+      
       if (this.avatarFile) {
         formData.append("avatar", this.avatarFile);
       }
-      // Add JSON user data
+      
       const userJson = JSON.stringify(this.form);
       formData.append("user", userJson);
-      fetch("https://back-production-bb9b.up.railway.app/api/auth/register", {
+      fetch("http://20.56.138.63:8080/api/auth/register", {
         method: "POST",
         credentials: "include",
         body: formData,

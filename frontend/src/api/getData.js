@@ -1,5 +1,5 @@
 export async function getData() {
-    return fetch('https://back-production-bb9b.up.railway.app//api/info', {
+    return fetch('http://20.56.138.63:8080//api/info', {
         method: 'GET',
         credentials: 'include',
     })

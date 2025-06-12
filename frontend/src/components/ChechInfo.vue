@@ -16,7 +16,7 @@ export default{
     methods: {
         async fetchInfo() {
             try {
-                const response = await fetch('https://back-production-bb9b.up.railway.app/api/info', {
+                const response = await fetch('http://20.56.138.63:8080/api/info', {
                     method: 'GET',
                     credentials: 'include',
                 });

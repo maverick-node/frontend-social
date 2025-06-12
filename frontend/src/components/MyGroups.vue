@@ -114,7 +114,7 @@ export default {
     }
   },
   beforeRouteEnter(to, from, next) {
-        fetch("https://back-production-bb9b.up.railway.app/api/info", {
+        fetch("http://20.56.138.63:8080/api/info", {
             method: "GET",
             credentials: "include",
         })
@@ -130,7 +130,7 @@ export default {
         });
     },
   async mounted() {
-    // Set up notification WebSocket
+    
     this.setupNotificationWebSocket();
     
     await this.fetchMyGroups();
@@ -139,7 +139,7 @@ export default {
     this.fetchNotifications();
   },
   async created(){
-    const userRes = await fetch("https://back-production-bb9b.up.railway.app/api/info", {
+    const userRes = await fetch("http://20.56.138.63:8080/api/info", {
       method: "GET",
       credentials: "include",
     });
@@ -150,17 +150,17 @@ export default {
   },
   methods: {
     setupNotificationWebSocket() {
-      // Register handler for real-time notifications
+      
       notificationWebSocket.onNotification('my-groups', (notification) => {
         console.log('Received real-time notification:', notification);
         
-        // Refresh notifications and count from server to ensure accuracy
+        
         this.fetchNotifications();
       });
     },
     async fetchMyGroups() {
       try {
-        const response = await fetch('https://back-production-bb9b.up.railway.app/api/mygroups', {
+        const response = await fetch('http://20.56.138.63:8080/api/mygroups', {
           credentials: 'include'
         });
         if (response.ok) {
@@ -172,7 +172,7 @@ export default {
     },
     async fetchPendingInvitations(groupId) {
       try {
-        const response = await fetch(`https://back-production-bb9b.up.railway.app/api/GetInvitations?group_id=${groupId}`, {
+        const response = await fetch(`http://20.56.138.63:8080/api/GetInvitations?group_id=${groupId}`, {
           credentials: 'include'
         });
         if (response.ok) {
@@ -206,7 +206,7 @@ export default {
       this.$router.push(`/profile/${this.user.name}`);
     },
     logout() {
-      fetch('https://back-production-bb9b.up.railway.app/api/logout', {
+      fetch('http://20.56.138.63:8080/api/logout', {
         method: 'POST',
         credentials: 'include'
       })
@@ -229,8 +229,8 @@ export default {
     async handleInvitation(groupId, userId, action) {
       try {
         const endpoint = action === 'accept' 
-          ? 'https://back-production-bb9b.up.railway.app/api/acceptgroupmember'
-          : 'https://back-production-bb9b.up.railway.app/api/removememberfromgroup';
+          ? 'http://20.56.138.63:8080/api/acceptgroupmember'
+          : 'http://20.56.138.63:8080/api/removememberfromgroup';
         const response = await fetch(endpoint, {
           method: 'POST',
           credentials: 'include',
@@ -253,8 +253,8 @@ export default {
     },
     async leaveGroup(groupId) {
       try {
-        // Get current user ID from the auth API
-        const userRes = await fetch("https://back-production-bb9b.up.railway.app/api/info", {
+        
+        const userRes = await fetch("http://20.56.138.63:8080/api/info", {
           method: "GET",
           credentials: "include",
         });
@@ -266,7 +266,7 @@ export default {
         
         const userData = await userRes.json();
         
-        const response = await fetch("https://back-production-bb9b.up.railway.app/api/removememberfromgroup", {
+        const response = await fetch("http://20.56.138.63:8080/api/removememberfromgroup", {
           method: "POST",
           credentials: "include",
           headers: {
@@ -274,13 +274,13 @@ export default {
           },
           body: JSON.stringify({
             group_id: groupId,
-            user_id: userData.id, // Use the user ID from the API response
+            user_id: userData.id, 
           }),
         });
         
         if (response.ok) {
           console.log("Successfully left the group");
-          // Refresh the groups list
+          
           await this.fetchMyGroups();
         } else {
           const errorText = await response.text();
@@ -298,7 +298,7 @@ export default {
     },
     async fetchNotifications() {
       try {
-        const res = await fetch('https://back-production-bb9b.up.railway.app/api/notifications', {
+        const res = await fetch('http://20.56.138.63:8080/api/notifications', {
           method: 'GET',
           credentials: 'include'
         });
@@ -325,7 +325,7 @@ export default {
 
         setTimeout(async () => {
           try {
-            const res = await fetch(`https://back-production-bb9b.up.railway.app/api/markasread`, {
+            const res = await fetch(`http://20.56.138.63:8080/api/markasread`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
@@ -375,7 +375,7 @@ export default {
     }
   },
   beforeUnmount() {
-    // Clean up notification WebSocket
+    
     notificationWebSocket.removeNotificationHandler('my-groups');
     document.removeEventListener('click', this.handleNotifClose);
   }

@@ -378,19 +378,19 @@ export default {
         title: "",
         content: "",
         image: "",
-        status: "public", // Default status
+        status: "public", 
       },
       image: null,
       imagePreview: null,
-      imageFileName: "", // Add this line to track file name
+      imageFileName: "", 
       posts: [],
       message: "",
       allowedUsers: [],
       selectedAllowedUsers: [],
       groups: [],
       otherUsers: [],
-      followedUsers: [], // Track followed users
-      // Chatbox data
+      followedUsers: [], 
+      
       isChatExpanded: false,
       newMessage: "",
       selectedChatUser: null,
@@ -418,7 +418,7 @@ export default {
     };
   },
   beforeRouteEnter(to, from, next) {
-    fetch("https://back-production-bb9b.up.railway.app/api/info", {
+    fetch("http://20.56.138.63:8080/api/info", {
       method: "GET",
       credentials: "include",
     })
@@ -436,7 +436,7 @@ export default {
   async created() {
     this.$router.push('/home');
     try {
-      const userRes = await fetch("https://back-production-bb9b.up.railway.app/api/info", {
+      const userRes = await fetch("http://20.56.138.63:8080/api/info", {
         method: "GET",
         credentials: "include",
       });
@@ -448,11 +448,11 @@ export default {
       this.user.username = userData.Username.toLowerCase();
 
       if (userData.Avatar) {
-        this.user.avatar = `https://back-production-bb9b.up.railway.app/uploads/${userData.Avatar}`;
+        this.user.avatar = `http://20.56.138.63:8080/uploads/${userData.Avatar}`;
       } else {
         this.user.avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.Username}`;
       }
-      // Initialize WebSocket
+      
       this.initializeWebSocket();
       await this.fetchPostsPrv();
       await this.fetchPosts();
@@ -468,7 +468,7 @@ export default {
   methods: {
     async fetchAllowedUsers() {
       try {
-        const res = await fetch("https://back-production-bb9b.up.railway.app/api/postsprivacy", {
+        const res = await fetch("http://20.56.138.63:8080/api/postsprivacy", {
           method: "GET",
           credentials: "include",
         });
@@ -496,8 +496,8 @@ export default {
     },
     async fetchAllUsers() {
       try {
-        // Fetch all users for follow list
-        const allUsersRes = await fetch("https://back-production-bb9b.up.railway.app/api/allusers", {
+        
+        const allUsersRes = await fetch("http://20.56.138.63:8080/api/allusers", {
           method: "GET",
           credentials: "include",
         });
@@ -511,12 +511,12 @@ export default {
             name: user.fullname,
             username: user.username,
             avatar: user.avatar
-              ? `https://back-production-bb9b.up.railway.app/uploads/${user.avatar}`
+              ? `http://20.56.138.63:8080/uploads/${user.avatar}`
               : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`,
-            followed: user.followed || false, // Track if the user is followed
+            followed: user.followed || false, 
           }));
 
-          // Initialize followedUsers based on allowedUsers
+          
           this.followedUsers = this.otherUsers.filter(
             (user) => user.followed
           );
@@ -524,8 +524,8 @@ export default {
 
         }
 
-        // Fetch chat users from openchat endpoint
-        const chatUsersRes = await fetch("https://back-production-bb9b.up.railway.app/api/openchat", {
+        
+        const chatUsersRes = await fetch("http://20.56.138.63:8080/api/openchat", {
           method: "GET",
           credentials: "include",
         });
@@ -539,9 +539,9 @@ export default {
               id: user.id,
               fullname: user.full_name,
               name: user.username,
-              messages: [], // Initialize empty messages array
-              avatar: user.avatar 
-                ? `https://back-production-bb9b.up.railway.app/uploads/${user.avatar}`
+              messages: [],
+              avatar:   user.avatar 
+                ? `http://20.56.138.63:8080/uploads/${user.avatar}`
                 : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`,
             }));
             
@@ -557,74 +557,49 @@ export default {
       }
     },
     initializeWebSocket() {
-      this.socket = new WebSocket("ws://https://frontend-social-net.vercel.app:8080/ws");
+      this.socket = new WebSocket("ws://localhost:8080/ws");
 
       this.socket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          console.log("Received WebSocket message:", data);
+        const data = JSON.parse(event.data);
+        if (data.type == "message" ){
+          this.showNotification("New message from " + data.username, "success");
+        }
+        console.log("Received message:", data);
 
-          // Handle error messages
-          if (data.error) {
-            console.error("WebSocket error:", data.error);
-            this.showNotification(data.error, "error");
-            return;
+        
+        const user = this.chatUsers.find((u) => u.name === data.username);
+        if (user) {
+          this.showNotification("New message from " + data.username, "success");
+          user.messages.push({
+            id: Date.now(),
+            text: data.message,
+            sender: "other",
+            timestamp: new Date().toISOString() 
+          });
+          
+          
+          if (this.selectedChatUser && this.selectedChatUser.name === data.username) {
+            this.$nextTick(() => {
+              this.scrollToBottom();
+            });
           }
-
-          // Handle user list updates
-          if (data.type === "users") {
-            console.log("Received user list update:", data);
-            return;
-          }
-
-          // Handle chat messages
-          if (data.type === "message" || data.message) {  // Check for both type and message field
-            console.log("Received chat message:", data);
-            // Find the user in chatUsers and add the message
-            const user = this.chatUsers.find((u) => u.username === data.username || u.name === data.username);
-            if (user) {
-              this.showNotification(`New message from ${data.username}`, "success");
-              user.messages.push({
-                id: Date.now(),
-                text: data.message,
-                sender: "other",
-                timestamp: new Date().toISOString()
-              });
-              
-              // If this is the currently selected user, scroll to bottom
-              if (this.selectedChatUser && 
-                  (this.selectedChatUser.username === data.username || 
-                   this.selectedChatUser.name === data.username)) {
-                this.$nextTick(() => {
-                  this.scrollToBottom();
-                });
-              }
-            } else {
-              console.warn("Received message from unknown user:", data.username);
-            }
-          }
-        } catch (error) {
-          console.error("Error processing WebSocket message:", error);
         }
       };
-
       this.socket.onopen = () => {
         console.log("WebSocket connected");
       };
 
       this.socket.onerror = (error) => {
         console.error("WebSocket error:", error);
-        this.showNotification("WebSocket connection error", "error");
       };
 
       this.socket.onclose = () => {
         console.log("WebSocket disconnected");
-        this.showNotification("Disconnected from chat server", "error");
       };
     },
     async fetchPosts() {
       try {
-        const res = await fetch("https://back-production-bb9b.up.railway.app/api/getposts", {
+        const res = await fetch("http://20.56.138.63:8080/api/getposts", {
           method: "GET",
           credentials: "include",
         });
@@ -633,16 +608,16 @@ export default {
 
           console.log("data", data);
 
-          // Initialize posts with comments-related fields
+          
           if (!data) {
             return;
           }
           this.posts = data.map((post) => ({
             ...post,
             authorAvatar: post.Avatar
-              ? `https://back-production-bb9b.up.railway.app/uploads/${post.Avatar}`
+              ? `http://20.56.138.63:8080/uploads/${post.Avatar}`
               : `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.Author}`,
-            Image: post.Image, // Already a full URL if backend does it as above
+            Image: post.Image, 
             comments: [],
             newComment: "",
             showComments: false,
@@ -661,7 +636,7 @@ export default {
     async fetchComments(post) {
       try {
         const res = await fetch(
-          `https://back-production-bb9b.up.railway.app/api/getcomments?post_id=${post.Id}`,
+          `http://20.56.138.63:8080/api/getcomments?post_id=${post.Id}`,
           {
             method: "GET",
             credentials: "include",
@@ -676,9 +651,9 @@ export default {
           post.comments = data.map((comment) => ({
             ...comment,
             avatar: comment.avatar
-              ? `https://back-production-bb9b.up.railway.app/uploads/${comment.avatar}`
+              ? `http://20.56.138.63:8080/uploads/${comment.avatar}`
               : `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.author}`,
-            image: comment.image ? `https://back-production-bb9b.up.railway.app/uploads/${comment.image}` : null,
+            image: comment.image ? `http://20.56.138.63:8080/uploads/${comment.image}` : null,
           }));
 
         } else {
@@ -697,7 +672,7 @@ export default {
         return;
       }
 
-      // Add length validation for comments
+      
       if (post.newComment.trim().length < 1) {
         post.commentError = "Comment must be at least 1 character long.";
         return;
@@ -712,13 +687,13 @@ export default {
       formData.append("post_id", post.Id.toString());
       formData.append("comment", post.newComment.trim());
 
-      // Use the specific image for this comment if it exists
+      
       if (this.commentImages[post.Id] && this.commentImages[post.Id].file) {
         formData.append("image", this.commentImages[post.Id].file);
       }
 
       try {
-        const res = await fetch("https://back-production-bb9b.up.railway.app/api/addcomments", {
+        const res = await fetch("http://20.56.138.63:8080/api/addcomments", {
           method: "POST",
           credentials: "include",
           body: formData
@@ -726,9 +701,9 @@ export default {
 
         if (res.ok) {
           post.commentError = "";
-          // Clear all inputs
+          
           post.newComment = "";
-          // Clear only this comment's image
+          
           this.commentImages[post.Id] = null;
           this.showNotification("Comment added successfully", "success");
           await this.fetchComments(post);
@@ -778,7 +753,7 @@ export default {
           formData.append("image", this.image);
         }
 
-        const res = await fetch("https://back-production-bb9b.up.railway.app/api/posts", {
+        const res = await fetch("http://20.56.138.63:8080/api/posts", {
           method: "POST",
           credentials: "include",
           body: formData
@@ -808,7 +783,7 @@ export default {
       }
     },
     logout() {
-      fetch("https://back-production-bb9b.up.railway.app/api/auth/logout", {
+      fetch("http://20.56.138.63:8080/api/auth/logout", {
         method: "POST",
         credentials: "include",
       })
@@ -837,7 +812,7 @@ export default {
           return;
         }
 
-        const userRes = await fetch("https://back-production-bb9b.up.railway.app/api/info", {
+        const userRes = await fetch("http://20.56.138.63:8080/api/info", {
           method: "GET",
           credentials: "include",
         });
@@ -854,27 +829,27 @@ export default {
         let requestBody = {};
 
         if (group.member_status === 'accepted') {
-          endpoint = "https://back-production-bb9b.up.railway.app/api/removememberfromgroup";
+          endpoint = "http://20.56.138.63:8080/api/removememberfromgroup";
           action = "leave";
           requestBody = {
             group_id: group.id,
             user_id: userData.id  
           };
         } else if (group.member_status === 'pending') {
-          endpoint = "https://back-production-bb9b.up.railway.app/api/cancelgrouprequest";
+          endpoint = "http://20.56.138.63:8080/api/cancelgrouprequest";
           action = "cancel request from";
           requestBody = {
             group_id: group.id
           };
         } else if (group.member_status === 'invited') {
-          endpoint = "https://back-production-bb9b.up.railway.app/api/acceptgroupinvite";
+          endpoint = "http://20.56.138.63:8080/api/acceptgroupinvite";
           action = "accept invitation to";
           requestBody = {
             group_id: group.id,
             action: 'accept'
           };
         } else {
-          endpoint = "https://back-production-bb9b.up.railway.app/api/requesttojoingroup";
+          endpoint = "http://20.56.138.63:8080/api/requesttojoingroup";
           action = "join";
           requestBody = {
             group_id: group.id
@@ -930,16 +905,16 @@ export default {
     },
     selectChatUser(user) {
       console.log("user", user.name);
-      this.selectedChatUser = user;
+      this.selectedChatUser = user.name;
       console.log("selectedChatUser", this.selectedChatUser);
-      this.fetchMessages(user.name);
+      this.fetchMessages(this.selectedChatUser);
     },
     async fetchMessages(user) {
-      console.log("Fetching messages for user:", user);
+      console.log("Fetching messages for use11:", user);
       
       try {
         const res = await fetch(
-          `https://back-production-bb9b.up.railway.app/api/getmessages?sender=${this.user.username}&receiver=${user}`,
+          `http://20.56.138.63:8080/api/getmessages?sender=${this.user.username}&receiver=${user}`,
           {
             method: "GET",
             credentials: "include",
@@ -950,44 +925,42 @@ export default {
           const data = await res.json();
           console.log("Fetched messages:", data);
 
-          const chatUser = this.chatUsers.find(u => u.username === user || u.name === user);
+          const chatUser = this.chatUsers.find(u => u.name === user);
           if (!chatUser) {
-            console.error("Chat user not found:", user);
-            this.showNotification("Chat user not found", "error");
+            console.error("Chat user not found");
             return;
           }
 
-          // Initialize messages array
+          
           chatUser.messages = [];
 
-          // Transform and add messages if data exists
+          
           if (data && Array.isArray(data)) {
             chatUser.messages = data.map(msg => ({
-              id: Date.now() + Math.random(), // Generate unique ID
+              id: Date.now() + Math.random(), 
               text: msg.message,
               sender: msg.username === this.user.username ? "self" : "other",
               timestamp: msg.time
             }));
 
-            // Sort messages by timestamp
+            
             chatUser.messages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
           }
 
-          // Update selectedChatUser with the found chat user
+          
           this.selectedChatUser = chatUser;
           
-          // Scroll to bottom after messages are loaded
+          
           this.$nextTick(() => {
             this.scrollToBottom();
           });
         } else {
-          const errorText = await res.text();
-          console.error("Failed to fetch messages:", errorText);
-          this.showNotification("Failed to load messages: " + errorText, "error");
+          console.error("Failed to fetch messages");
+          this.showNotification("Failed to load messages", "error");
         }
       } catch (error) {
         console.error("Error fetching messages:", error);
-        this.showNotification("Error loading messages: " + error.message, "error");
+        this.showNotification("Error loading messages", "error");
       }
     },
     scrollToBottom() {
@@ -999,16 +972,16 @@ export default {
     sendMessage() {
       if (this.newMessage.trim() && this.selectedChatUser) {
         this.currentMessage.type = "message";
-        this.currentMessage.receiver = this.selectedChatUser.name; // Changed from name to username
+        this.currentMessage.receiver = this.selectedChatUser.name;
         this.currentMessage.username = this.user.username;
         this.currentMessage.message = this.newMessage;
 
-        // Send the message through WebSocket
+        
         if (this.socket) {
           this.socket.send(JSON.stringify(this.currentMessage));
         }
 
-        // Add the message to the UI
+        
         this.selectedChatUser.messages.push({
           text: this.newMessage,
           sender: "self",
@@ -1017,7 +990,7 @@ export default {
 
         this.newMessage = "";
         
-        // Scroll to bottom after message is added
+        
         this.$nextTick(() => {
           this.scrollToBottom();
         });
@@ -1043,7 +1016,7 @@ export default {
     },
     async fetchGroups() {
       try {
-        const response = await fetch("https://back-production-bb9b.up.railway.app/api/getgroups", {
+        const response = await fetch("http://20.56.138.63:8080/api/getgroups", {
           method: "GET",
           credentials: "include",
         });
@@ -1064,7 +1037,7 @@ export default {
           }));
           console.log("Fetched groups:", this.groups);
 
-          // Check membership status for each group
+          
           for (const group of this.groups) {
             await this.checkGroupMembership(group.id);
           }
@@ -1084,7 +1057,7 @@ export default {
           return;
         }
         const response = await fetch(
-          `https://back-production-bb9b.up.railway.app/api/ismember?group_id=${groupId}`,
+          `http://20.56.138.63:8080/api/ismember?group_id=${groupId}`,
           {
             method: "GET",
             credentials: "include",
@@ -1104,7 +1077,7 @@ export default {
           this.groupMembership[groupId] = data.is_member;
         } else {
           console.warn("Received invalid data format from server");
-          this.groupMembership[groupId] = false; // Default to not a member
+          this.groupMembership[groupId] = false; 
         }
       } catch (error) {
         console.error("Error checking group membership:", error);
@@ -1113,7 +1086,7 @@ export default {
     },
     async createGroup() {
       try {
-        const userRes = await fetch("https://back-production-bb9b.up.railway.app/api/info", {
+        const userRes = await fetch("http://20.56.138.63:8080/api/info", {
           method: "GET",
           credentials: "include",
         });
@@ -1126,7 +1099,7 @@ export default {
         const userData = await userRes.json();
         this.newGroup.creator_id = userData.id; 
 
-        const response = await fetch("https://back-production-bb9b.up.railway.app/api/creategroups", {
+        const response = await fetch("http://20.56.138.63:8080/api/creategroups", {
           method: "POST",
           credentials: "include",
           headers: {
@@ -1163,7 +1136,7 @@ export default {
     },
     async fetchPostsPrv() {
       try {
-        const res = await fetch("https://back-production-bb9b.up.railway.app/api/postsprv", {
+        const res = await fetch("http://20.56.138.63:8080/api/postsprv", {
           method: "GET",
           credentials: "include",
         });
@@ -1211,7 +1184,7 @@ export default {
     },
     async fetchNotifications() {
       try {
-        const res = await fetch("https://back-production-bb9b.up.railway.app/api/notifications", {
+        const res = await fetch("http://20.56.138.63:8080/api/notifications", {
           method: "GET",
           credentials: "include",
         });
@@ -1230,7 +1203,7 @@ export default {
             }))
             : [];
           
-          // Update unread count
+          
           this.unreadNotificationCount = this.notifications.filter(n => !n.is_read).length;
         } else {
           this.notifications = [];
@@ -1246,14 +1219,14 @@ export default {
       console.log(notificationId);
       
       try {
-        // Find the notification first
+        
         const notification = this.notifications.find(n => n.id === notificationId);
         if (!notification) return;
 
-        // Set a timeout to mark as read after 3 seconds
+        
         setTimeout(async () => {
           try {
-            const res = await fetch(`https://back-production-bb9b.up.railway.app/api/markasread`, {
+            const res = await fetch(`http://20.56.138.63:8080/api/markasread`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
@@ -1268,13 +1241,13 @@ export default {
             console.log("res", res);
             if (res.ok) {
               notification.is_read = true;
-              // Update unread count
+              
               this.unreadNotificationCount = this.notifications.filter(n => !n.is_read).length;
             }
           } catch (error) {
             console.error('Error marking notification as read:', error);
           }
-        }, 3000); // 3 seconds delay
+        }, 3000); 
       } catch (error) {
         console.error('Error marking notification as read:', error);
       }
@@ -1285,36 +1258,36 @@ export default {
       const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
       if (!allowedTypes.includes(file.type)) {
           this.showNotification('Only JPEG, PNG, and GIF images are allowed', 'error');
-          event.target.value = ''; // Clear the input
+          event.target.value = ''; 
           return;
         }
-        // Validate file size (2MB limit)
-        const maxSize = 2 * 1024 * 1024; // 2 MB in bytes
+        
+        const maxSize = 2 * 1024 * 1024; 
         if (file.size > maxSize) {
           this.showNotification('Image file size must be less than 2MB', 'error');
-          event.target.value = ''; // Clear the input
+          event.target.value = ''; 
           return;
         }
 
         if (postId) {
-          // Handle comment image
+          
           this.commentImages[postId] = {
             file: file,
             preview: URL.createObjectURL(file),
             fileName: file.name
           };
         } else {
-          // Handle post image
+          
           this.image = file;
           this.imageFileName = file.name;
           this.imagePreview = URL.createObjectURL(file);
         }
       } else {
         if (postId) {
-          // Clear comment image
+          
           this.commentImages[postId] = null;
         } else {
-          // Clear post image
+          
           this.image = null;
           this.imagePreview = null;
           this.imageFileName = "";
@@ -1327,26 +1300,26 @@ export default {
       const now = new Date();
       const diff = now - date;
 
-      // Less than 1 minute
+      
       if (diff < 60000) {
         return 'just now';
       }
-      // Less than 1 hour
+      
       if (diff < 3600000) {
         const minutes = Math.floor(diff / 60000);
         return `${minutes}m ago`;
       }
-      // Less than 24 hours
+      
       if (diff < 86400000) {
         const hours = Math.floor(diff / 3600000);
         return `${hours}h ago`;
       }
-      // Less than 7 days
+      
       if (diff < 604800000) {
         const days = Math.floor(diff / 86400000);
         return `${days}d ago`;
       }
-      // Otherwise show the date
+      
       return date.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
@@ -1355,7 +1328,7 @@ export default {
     },
     async fetchChatUsers() {
       try {
-        const chatUsersRes = await fetch("https://back-production-bb9b.up.railway.app/api/openchat", {
+        const chatUsersRes = await fetch("http://20.56.138.63:8080/api/openchat", {
           method: "GET",
           credentials: "include",
         });
@@ -1371,7 +1344,7 @@ export default {
               name: user.username,
               messages: [],
               avatar: user.avatar 
-                ? `https://back-production-bb9b.up.railway.app/uploads/${user.avatar}`
+                ? `http://20.56.138.63:8080/uploads/${user.avatar}`
                 : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`,
             }));
           }
@@ -1388,28 +1361,28 @@ export default {
     async handleChatClick() {
       if (!this.isChatExpanded) {
         await this.fetchChatUsers();
-        this.selectedChatUser = null; // Reset selected user when opening chat
+        this.selectedChatUser = null; 
       }
       this.isChatExpanded = !this.isChatExpanded;
     },
     setupNotificationWebSocket() {
-      // Register handler for real-time notifications
+      
       notificationWebSocket.onNotification('forum-page', (notification) => {
         console.log('Received real-time notification:', notification);
         
-        // Refresh notifications and count from server to ensure accuracy
+        
         this.fetchNotifications();
       });
     },
     async fetchNotificationCount() {
       try {
-        const res = await fetch('https://back-production-bb9b.up.railway.app/api/notifications', {
+        const res = await fetch('http://20.56.138.63:8080/api/notifications', {
           method: 'GET',
           credentials: 'include'
         });
         if (res.ok) {
           const data = await res.json();
-          // Only update the count, don't store notifications unless popup is open
+          
           this.unreadNotificationCount = (data || []).filter(n => !n.is_read).length;
         }
       } catch (err) {
@@ -1426,7 +1399,7 @@ export default {
     },
   },
   mounted() {
-    // Set up notification WebSocket
+    
     this.setupNotificationWebSocket();
     
     this.fetchPosts();
@@ -1435,7 +1408,7 @@ export default {
     document.addEventListener('click', this.handleNotifClose);
   },
   beforeUnmount() {
-    // Clean up notification WebSocket
+    
     notificationWebSocket.removeNotificationHandler('forum-page');
     document.removeEventListener('click', this.handleNotifClose);
   },
@@ -1506,7 +1479,7 @@ export default {
   flex-direction: column;
   padding: 2rem 2rem 2rem 1.5rem;
   min-width: 0;
-  margin-left: 70px; /* Add margin to account for fixed sidebar */
+  margin-left: 70px;
 }
 
 /* Top Avatar Bar */
@@ -2214,7 +2187,7 @@ export default {
 .comment {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   background: #fff;
   border-radius: 0.7rem;
   padding: 1rem;
@@ -2882,12 +2855,12 @@ export default {
     flex-direction: row;
     justify-content: center;
     gap: 1.5rem;
-    position: relative; /* Change from fixed to relative */
+    position: relative;
   }
 
   .main-area {
-    margin-left: 0; /* Remove margin on mobile */
-    margin-top: 80px; /* Add margin for fixed top sidebar */
+    margin-left: 0;
+    margin-top: 80px;
     padding: 1rem;
   }
 

@@ -125,7 +125,7 @@
               Member Requests
               <span v-if="pendingRequests.length > 0" class="badge">{{
                 pendingRequests.length
-              }}</span>
+                }}</span>
             </button>
             <button v-if="membershipStatus === 'accepted'" class="invite-btn" @click="openInviteModal">
               Invite Members
@@ -181,7 +181,8 @@
               <h3 class="post-title">{{ post.title }}</h3>
               <p class="post-content">{{ post.content }}</p>
               <div v-if="post.image" class="post-image">
-                <img :src="post.image" alt="Post Image" id="groupostimage" />
+                <img :src="post.image" alt="Post Image" id="groupostimage" style="cursor:pointer"
+                  @click="openImageModal(post.image)" />
               </div>
               <div class="post-actions">
                 <button @click="toggleComments(post)">
@@ -204,11 +205,9 @@
                   </div>
                   <p class="comment-content">{{ comment.content }}</p>
                   <div v-if="comment.image" class="comment-image">
-                    <img :src="`https://back-production-bb9b.up.railway.app/uploads/${comment.image}`" alt="Comment Image" style="
-                        max-width: 200px;
-                        max-height: 200px;
-                        margin-top: 8px;
-                      " />
+                    <img :src="`http://20.56.138.63:8080/uploads/${comment.image}`" alt="Comment Image"
+                      style="max-width: 200px; max-height: 200px; margin-top: 8px; cursor:pointer"
+                      @click="openImageModal(`http://20.56.138.63:8080/uploads/${comment.image}`)" />
                   </div>
                 </div>
                 <form @submit.prevent="addComment(post)" class="comment-form" enctype="multipart/form-data">
@@ -243,7 +242,7 @@
                     <span class="message-author">{{ msg.username }}</span>
                     <span class="message-time">{{
                       formatMessageTime(msg.created_at)
-                    }}</span>
+                      }}</span>
                   </div>
                   <p class="message-content">{{ msg.content }}</p>
                 </div>
@@ -322,14 +321,14 @@
                           <span class="response-icon">👥</span>
                           <span class="response-count">{{
                             event.going_count || 0
-                          }}</span>
+                            }}</span>
                           <span class="response-label">Going</span>
                         </span>
                         <span class="response-stat not-going">
                           <span class="response-icon">✕</span>
                           <span class="response-count">{{
                             event.not_going_count || 0
-                          }}</span>
+                            }}</span>
                           <span class="response-label">Not Going</span>
                         </span>
                       </div>
@@ -342,7 +341,7 @@
                       }" :disabled="event.user_response === 1">
                         <span class="btn-icon">{{
                           event.user_response === 1 ? "✓" : "👤"
-                        }}</span>
+                          }}</span>
                         {{
                           event.user_response === 1 ? "You're Going" : "Going"
                         }}
@@ -354,7 +353,7 @@
                       }" :disabled="event.user_response === -1">
                         <span class="btn-icon">{{
                           event.user_response === -1 ? "✓" : "✕"
-                        }}</span>
+                          }}</span>
                         {{
                           event.user_response === -1 ? "Not Going" : "Not Going"
                         }}
@@ -466,6 +465,12 @@
         </div>
       </div>
     </div>
+    <div v-if="showImageModal" class="image-modal-overlay" @click.self="closeImageModal">
+      <div class="image-modal-content">
+        <img :src="modalImageSrc" alt="Large Image" />
+        <button class="close-image-modal" @click="closeImageModal">&times;</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -525,10 +530,12 @@ export default {
       invitedUsers: new Set(),
       groupMembers: [],
       showNotifications: false,
+      showImageModal: false,
+      modalImageSrc: "",
     };
   },
   beforeRouteEnter(to, from, next) {
-    fetch("https://back-production-bb9b.up.railway.app/api/info", {
+    fetch("http://20.56.138.63:8080/api/info", {
       method: "GET",
       credentials: "include",
     })
@@ -559,9 +566,17 @@ export default {
       await this.fetchPendingRequests();
     }
     this.initializeWebSocket(groupId);
-    this.scrollToBottom(); // Add this line
+    this.scrollToBottom(); 
   },
   methods: {
+    openImageModal(src) {
+      this.modalImageSrc = src;
+      this.showImageModal = true;
+    },
+    closeImageModal() {
+      this.showImageModal = false;
+      this.modalImageSrc = "";
+    },
     scrollToBottom() {
       this.$nextTick(() => {
         const chatContainer = document.querySelector('.chat-messages');
@@ -573,7 +588,7 @@ export default {
     async fetchGroupDetails(groupId) {
       try {
         const response = await fetch(
-          `https://back-production-bb9b.up.railway.app/api/getgroups?id=${groupId}`,
+          `http://20.56.138.63:8080/api/getgroups?id=${groupId}`,
           {
             method: "GET",
             credentials: "include",
@@ -616,7 +631,7 @@ export default {
     },
     async fetchNotifications() {
       try {
-        const res = await fetch("https://back-production-bb9b.up.railway.app/api/notifications", {
+        const res = await fetch("http://20.56.138.63:8080/api/notifications", {
           method: "GET",
           credentials: "include",
         });
@@ -649,10 +664,10 @@ export default {
         const notification = this.notifications.find(n => n.id === notificationId);
         if (!notification) return;
 
-        // Set a timeout to mark as read after 2 seconds
+        
         setTimeout(async () => {
           try {
-            const res = await fetch(`https://back-production-bb9b.up.railway.app/api/markasread`, {
+            const res = await fetch(`http://20.56.138.63:8080/api/markasread`, {
               method: 'POST',
               credentials: 'include',
               headers: {
@@ -677,7 +692,7 @@ export default {
     async checkMembership(groupId) {
       try {
         const response = await fetch(
-          `https://back-production-bb9b.up.railway.app/api/checkmem?group_id=${groupId}`,
+          `http://20.56.138.63:8080/api/checkmem?group_id=${groupId}`,
           {
             method: "GET",
             credentials: "include",
@@ -693,7 +708,7 @@ export default {
           this.isAdmin = data.is_admin || false;
           this.group.is_owner = data.is_owner || false;
 
-          // If user is not a member or pending, disable features
+          
           if (!this.isMember || this.membershipStatus === 'pending') {
             this.disableFeatures();
           }
@@ -704,7 +719,7 @@ export default {
     },
     initializeWebSocket(groupId) {
       this.socket = new WebSocket(
-        `ws://https://frontend-social-net.vercel.app:8080/ws/group/${groupId}`
+        `ws://localhost:8080/ws/group/${groupId}`
       );
 
       this.socket.onopen = () => {
@@ -715,12 +730,12 @@ export default {
         try {
           const data = JSON.parse(event.data);
 
-          // Handle initial messages array
+          
           if (Array.isArray(data)) {
             this.chatMessages = data
               .map(msg => ({
                 ...msg,
-                authorAvatar: msg.avatar ? `https://back-production-bb9b.up.railway.app/uploads/${msg.avatar}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.username}`,
+                authorAvatar: msg.avatar ? `http://20.56.138.63:8080/uploads/${msg.avatar}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.username}`,
                 created_at: new Date(msg.created_at)
               }))
               .sort((a, b) => a.created_at - b.created_at);
@@ -736,7 +751,7 @@ export default {
           if (data && data.username && data.content) {
             this.chatMessages.push({
               ...data,
-              authorAvatar: data.avatar ? `https://back-production-bb9b.up.railway.app/uploads/${data.avatar}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.username}`,
+              authorAvatar: data.avatar ? `http://20.56.138.63:8080/uploads/${data.avatar}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.username}`,
               created_at: new Date(data.created_at)
             });
 
@@ -786,29 +801,29 @@ export default {
       const file = event.target.files[0];
       if (file) {
         const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
-      if (!allowedTypes.includes(file.type)) {
+        if (!allowedTypes.includes(file.type)) {
           this.showNotification('Only JPEG, PNG, and GIF images are allowed', 'error');
-          event.target.value = ''; // Clear the input
+          event.target.value = ''; 
           return;
         }
-        // Validate file size (2MB limit)
-        const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+        
+        const maxSize = 2 * 1024 * 1024; 
         if (file.size > maxSize) {
           this.showNotification('Image file size must be less than 2MB', 'error');
-          event.target.value = ''; // Clear the input
+          event.target.value = ''; 
           return;
         }
 
         const reader = new FileReader();
         reader.onload = (e) => {
-          this.image = e.target.result; // base64 string
+          this.image = e.target.result; 
         };
         reader.readAsDataURL(file);
       }
     },
     async leaveGroup() {
       try {
-        const userRes = await fetch("https://back-production-bb9b.up.railway.app/api/info", {
+        const userRes = await fetch("http://20.56.138.63:8080/api/info", {
           method: "GET",
           credentials: "include",
         });
@@ -821,7 +836,7 @@ export default {
         const userData = await userRes.json();
 
         const response = await fetch(
-          "https://back-production-bb9b.up.railway.app/api/removememberfromgroup",
+          "http://20.56.138.63:8080/api/removememberfromgroup",
           {
             method: "POST",
             credentials: "include",
@@ -830,7 +845,7 @@ export default {
             },
             body: JSON.stringify({
               group_id: this.group.id,
-              user_id: userData.id, // Use the user ID from the API response
+              user_id: userData.id, 
             }),
           },
         );
@@ -857,14 +872,14 @@ export default {
       const eventDate = new Date(date);
       const now = new Date();
       const maxDate = new Date();
-      maxDate.setFullYear(now.getFullYear() + 2); // Allow events up to 2 years in the future
+      maxDate.setFullYear(now.getFullYear() + 2); 
 
-      // Check if date is in the past
+      
       if (eventDate < now) {
         return { valid: false, message: "Event date cannot be in the past" };
       }
 
-      // Check if date is too far in the future
+      
       if (eventDate > maxDate) {
         return { valid: false, message: "Event date cannot be more than 2 years in the future" };
       }
@@ -873,7 +888,7 @@ export default {
     },
     async createEvent() {
       try {
-        // Validate event date
+        
         const dateValidation = this.validateEventDate(this.newEvent.date);
         if (!dateValidation.valid) {
           this.showNotification(dateValidation.message, "error");
@@ -881,7 +896,7 @@ export default {
         }
 
         const response = await fetch(
-          `https://back-production-bb9b.up.railway.app/api/events/add?group_id=${this.$route.params.id}`,
+          `http://20.56.138.63:8080/api/events/add?group_id=${this.$route.params.id}`,
           {
             method: "POST",
             credentials: "include",
@@ -917,7 +932,7 @@ export default {
     async respondToEvent(eventId, response) {
       try {
         const res = await fetch(
-          `https://back-production-bb9b.up.railway.app/api/events/join?event_id=${eventId}&response=${response}`,
+          `http://20.56.138.63:8080/api/events/join?event_id=${eventId}&response=${response}`,
           {
             method: "POST",
             credentials: "include",
@@ -930,7 +945,7 @@ export default {
 
         const data = await res.json();
 
-        // Update the event in the list with new counts
+        
         const eventToUpdate = this.upcomingEvents.find(e => e.id === eventId);
         if (eventToUpdate) {
           eventToUpdate.going_count = data.going_count;
@@ -959,7 +974,7 @@ export default {
     async fetchEvents(group_id) {
       try {
         const response = await fetch(
-          `https://back-production-bb9b.up.railway.app/api/events?id=${group_id}`,
+          `http://20.56.138.63:8080/api/events?id=${group_id}`,
           {
             credentials: "include",
           }
@@ -1003,7 +1018,7 @@ export default {
     async fetchPosts(group_id) {
       try {
         const response = await fetch(
-          `https://back-production-bb9b.up.railway.app/api/groupposts?group_id=${group_id}`,
+          `http://20.56.138.63:8080/api/groupposts?group_id=${group_id}`,
           {
             credentials: "include",
           }
@@ -1012,13 +1027,13 @@ export default {
         if (response.ok) {
           const posts = await response.json();
           console.log("Fetched posts:", posts);
-          
+
           if (posts) {
             this.posts = posts.map((post) => ({
               ...post,
               id: post.id,
               author: post.author,
-              authorAvatar: post.avatar ? `https://back-production-bb9b.up.railway.app/uploads/${post.avatar}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author}`,
+              authorAvatar: post.avatar ? `http://20.56.138.63:8080/uploads/${post.avatar}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author}`,
               image: post.image ? post.image : null,
               created_at: post.creation_date,
               comments: [],
@@ -1042,7 +1057,7 @@ export default {
       const groupId = this.$route.params.id;
 
       try {
-        const response = await fetch(`https://back-production-bb9b.up.railway.app/api/groupposts/add?group_id=${groupId}`, {
+        const response = await fetch(`http://20.56.138.63:8080/api/groupposts/add?group_id=${groupId}`, {
           method: "POST",
           credentials: "include",
           headers: {
@@ -1058,7 +1073,7 @@ export default {
         if (response.ok) {
           this.newPost = { title: "", content: "", image: "" };
           this.image = "";
-          // Clear the file input
+          
           const fileInput = document.querySelector('input[type="file"]');
           if (fileInput) {
             fileInput.value = '';
@@ -1075,17 +1090,17 @@ export default {
     handleImageUpload(event) {
       const file = event.target.files[0];
       if (file) {
-        // Validate file size (2MB limit)
-        const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+        
+        const maxSize = 2 * 1024 * 1024; 
         if (file.size > maxSize) {
           alert('Image file size must be less than 2MB');
-          event.target.value = ''; // Clear the input
+          event.target.value = ''; 
           return;
         }
 
         const reader = new FileReader();
         reader.onload = (e) => {
-          this.image = e.target.result; // base64 string
+          this.image = e.target.result; 
         };
         reader.readAsDataURL(file);
       }
@@ -1102,7 +1117,7 @@ export default {
         formData.append("image", post.commentImage);
       }
       try {
-        const res = await fetch("https://back-production-bb9b.up.railway.app/api/groupcomments/add", {
+        const res = await fetch("http://20.56.138.63:8080/api/groupcomments/add", {
           method: "POST",
           credentials: "include",
           body: formData,
@@ -1112,7 +1127,7 @@ export default {
           post.newComment = "";
           post.commentImage = null;
           post.commentImagePreview = null;
-          // Clear the file input
+          
           const fileInput = document.querySelector(`input[type="file"][data-post-id="${post.id}"]`);
           if (fileInput) {
             fileInput.value = '';
@@ -1131,16 +1146,16 @@ export default {
     onCommentImageChange(event, post) {
       const file = event.target.files[0];
       if (file) {
-        // Validate file size (2MB limit)
-        const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+        
+        const maxSize = 2 * 1024 * 1024; 
         if (file.size > maxSize) {
-          this.showNotification('Image file size must be less than 2MB', 'error'); 
-          event.target.value = ''; // Clear the input
+          this.showNotification('Image file size must be less than 2MB', 'error');
+          event.target.value = ''; 
           return;
         }
 
         post.commentImage = file;
-        // Create a preview URL
+        
         post.commentImagePreview = URL.createObjectURL(file);
       } else {
         post.commentImage = null;
@@ -1151,7 +1166,7 @@ export default {
     async fetchComments(post) {
       try {
         const res = await fetch(
-          `https://back-production-bb9b.up.railway.app/api/groupcomments?group_post_id=${post.id}`,
+          `http://20.56.138.63:8080/api/groupcomments?group_post_id=${post.id}`,
           {
             method: "GET",
             credentials: "include",
@@ -1162,7 +1177,7 @@ export default {
           post.comments = data.map((comment) => ({
             ...comment,
             authorAvatar: comment.avatar
-              ? `https://back-production-bb9b.up.railway.app/uploads/${comment.avatar}`
+              ? `http://20.56.138.63:8080/uploads/${comment.avatar}`
               : `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.author}`,
             created_at: comment.creation_date,
             image: comment.image
@@ -1196,7 +1211,7 @@ export default {
       this.$router.push('/mygroups');
     },
     logout() {
-      fetch('https://back-production-bb9b.up.railway.app/api/logout', {
+      fetch('http://20.56.138.63:8080/api/logout', {
         method: 'POST',
         credentials: 'include'
       })
@@ -1212,7 +1227,7 @@ export default {
         });
     },
     disableFeatures() {
-      // Clear sensitive data if user is not a member
+      
       this.posts = [];
       this.chatMessages = [];
       this.upcomingEvents = [];
@@ -1223,7 +1238,7 @@ export default {
 
       try {
         const response = await fetch(
-          `https://back-production-bb9b.up.railway.app/api/GetInvitations?group_id=${this.group.id}`,
+          `http://20.56.138.63:8080/api/GetInvitations?group_id=${this.group.id}`,
           {
             credentials: "include",
           }
@@ -1232,8 +1247,8 @@ export default {
           const data = await response.json();
           console.log("Pending requests data:", data);
 
-          // Only include users who have requested to join (status: pending)
-          // Exclude users who were invited (status: invited)
+          
+          
           this.pendingRequests = Array.isArray(data) ? data : [];
         }
       } catch (error) {
@@ -1245,8 +1260,8 @@ export default {
     async handleMemberRequest(userId, action) {
       try {
         const endpoint = action === 'accept'
-          ? 'https://back-production-bb9b.up.railway.app/api/acceptgroupmember'
-          : 'https://back-production-bb9b.up.railway.app/api/removememberfromgroup';
+          ? 'http://20.56.138.63:8080/api/acceptgroupmember'
+          : 'http://20.56.138.63:8080/api/removememberfromgroup';
 
         const response = await fetch(endpoint, {
           method: 'POST',
@@ -1281,8 +1296,8 @@ export default {
     async handleInvitation(action) {
       try {
         const endpoint = action === 'accept'
-          ? 'https://back-production-bb9b.up.railway.app/api/acceptgroupinvite'
-          : 'https://back-production-bb9b.up.railway.app/api/declinegroupinvite';
+          ? 'http://20.56.138.63:8080/api/acceptgroupinvite'
+          : 'http://20.56.138.63:8080/api/declinegroupinvite';
 
         const response = await fetch(endpoint, {
           method: 'POST',
@@ -1297,7 +1312,7 @@ export default {
         });
         console.log(`Invitation ${action} request sent for group ID: ${this.group.id}`);
 
-        // Update UI immediately on success
+        
         if (action === 'accept') {
           this.membershipStatus = 'accepted';
           this.isMember = true;
@@ -1322,7 +1337,7 @@ export default {
     },
     async fetchAllUsers() {
       try {
-        const response = await fetch("https://back-production-bb9b.up.railway.app/api/allusers", {
+        const response = await fetch("http://20.56.138.63:8080/api/allusers", {
           credentials: "include",
         });
         if (response.ok) {
@@ -1333,12 +1348,12 @@ export default {
             id: user.id,
             username: user.username,
             avatar: user.avatar
-              ? `https://back-production-bb9b.up.railway.app/uploads/${user.avatar}`
+              ? `http://20.56.138.63:8080/uploads/${user.avatar}`
               : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`,
             invited: false
           }));
           console.log("Processed users:", this.allUsers);
-          // Initialize filtered users with all users
+          
           this.filteredUsers = [...this.allUsers];
         }
       } catch (error) {
@@ -1351,16 +1366,16 @@ export default {
       console.log("Search query:", this.searchQuery);
       console.log("All users:", this.allUsers);
 
-      // First, get all member statuses for this group
+      
       try {
-        const response = await fetch(`https://back-production-bb9b.up.railway.app/api/groupmembers/status?group_id=${this.group.id}`, {
+        const response = await fetch(`http://20.56.138.63:8080/api/groupmembers/status?group_id=${this.group.id}`, {
           credentials: "include",
         });
         if (response.ok) {
           const memberStatuses = await response.json();
           console.log("Member statuses:", memberStatuses);
 
-          // Update user statuses
+          
           this.allUsers = this.allUsers.map(user => ({
             ...user,
             status: memberStatuses[user.id] || null
@@ -1371,7 +1386,7 @@ export default {
       }
 
       if (!this.searchQuery.trim()) {
-        // Show all users
+        
         this.filteredUsers = [...this.allUsers];
       } else {
         const query = this.searchQuery.toLowerCase();
@@ -1385,7 +1400,7 @@ export default {
 
     async inviteUser(user) {
       try {
-        const response = await fetch("https://back-production-bb9b.up.railway.app/api/addmembertogroup", {
+        const response = await fetch("http://20.56.138.63:8080/api/addmembertogroup", {
           method: "POST",
           credentials: "include",
           headers: {
@@ -1400,14 +1415,14 @@ export default {
         console.log("Invitation sent to:", user.id, this.group.id, "status:", "invited");
 
         if (response.ok) {
-          // Update the user's status immediately
+          
           user.status = 'invited';
           this.invitedUsers.add(user.id);
           this.showNotification(`Invitation sent to ${user.username}`, "success");
 
-          // Create notification for the invited user
+          
           try {
-            await fetch("https://back-production-bb9b.up.railway.app/api/notifications", {
+            await fetch("http://20.56.138.63:8080/api/notifications", {
               method: "POST",
               credentials: "include",
               headers: {
@@ -1421,7 +1436,7 @@ export default {
             });
           } catch (notifError) {
             console.error("Error creating notification:", notifError);
-            // Don't show error to user since invitation was successful
+            
           }
         } else {
           const errorText = await response.text();
@@ -1436,7 +1451,7 @@ export default {
 
     async fetchGroupMembers() {
       try {
-        const response = await fetch(`https://back-production-bb9b.up.railway.app/api/groupmembers?group_id=${this.group.id}`, {
+        const response = await fetch(`http://20.56.138.63:8080/api/groupmembers?group_id=${this.group.id}`, {
           credentials: "include",
         });
         if (response.ok) {
@@ -1453,7 +1468,7 @@ export default {
       this.showInviteMembersModal = true;
       await this.fetchAllUsers();
       await this.fetchGroupMembers();
-      this.searchUsers(); // Initialize the filtered users list
+      this.searchUsers(); 
     },
     formatMessageTime(date) {
       const now = new Date();
@@ -1461,13 +1476,13 @@ export default {
       const diffInHours = Math.abs(now - messageDate) / 36e5;
 
       if (diffInHours < 24) {
-        // Today - show time only
+        
         return messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       } else if (diffInHours < 48) {
-        // Yesterday
+        
         return 'Yesterday ' + messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       } else {
-        // Show date and time
+        
         return messageDate.toLocaleDateString([], {
           month: 'short',
           day: 'numeric',
@@ -1477,27 +1492,27 @@ export default {
       }
     },
     setupNotificationWebSocket() {
-      // Register handler for real-time notifications
+      
       notificationWebSocket.onNotification('group-page', (notification) => {
         console.log('Received real-time notification:', notification);
 
-        // Refresh notifications and count from server to ensure accuracy
+        
         this.fetchNotifications();
       });
     },
   },
   mounted() {
-    // Set up notification WebSocket
+    
     this.setupNotificationWebSocket();
 
     this.fetchGroupDetails(this.$route.params.id);
     this.fetchPosts(this.$route.params.id);
     this.fetchNotifications();
     document.addEventListener('click', this.handleNotifClose);
-    this.scrollToBottom(); // Add this line
+    this.scrollToBottom(); 
   },
   beforeUnmount() {
-    // Clean up notification WebSocket
+    
     notificationWebSocket.removeNotificationHandler('group-page');
 
     document.removeEventListener('click', this.handleNotifClose);
@@ -3232,6 +3247,54 @@ button:disabled {
   overflow-wrap: break-word;
   white-space: pre-line;
   /* preserves line breaks and wraps text */
+}
+
+.image-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(30, 32, 48, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.image-modal-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-modal-content img {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 1rem;
+  box-shadow: 0 8px 32px rgba(35,38,58,0.25);
+  background: #fff;
+}
+
+.close-image-modal {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  border: none;
+  font-size: 2rem;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-image-modal:hover {
+  background: #ef4444;
 }
 
 /* Add responsive styles for sidebar */

@@ -3,15 +3,12 @@
     <div class="chat-header">
       <h2>{{ groupName }}</h2>
     </div>
-    
+
     <div class="messages-container" ref="messagesContainer">
-      <div v-for="message in messages" :key="message.id" 
-           class="message" 
-           :class="{ 
-             'own-message': message.sender_id === currentUserId,
-             'unread-message': !message.is_read && message.sender_id !== currentUserId 
-           }"
-           @click="markMessageAsRead(message)">
+      <div v-for="message in messages" :key="message.id" class="message" :class="{
+        'own-message': message.sender_id === currentUserId,
+        'unread-message': !message.is_read && message.sender_id !== currentUserId
+      }" @click="markMessageAsRead(message)">
         <div class="message-header">
           <span class="username">{{ message.username }}</span>
           <span class="timestamp">{{ formatTime(message.created_at) }}</span>
@@ -21,12 +18,7 @@
     </div>
 
     <div class="message-input">
-      <input 
-        type="text" 
-        v-model="newMessage" 
-        @keyup.enter="sendMessage"
-        placeholder="Type a message..."
-      >
+      <input type="text" v-model="newMessage" @keyup.enter="sendMessage" placeholder="Type a message...">
       <button @click="sendMessage" :disabled="!newMessage.trim()">Send</button>
     </div>
   </div>
@@ -50,7 +42,7 @@ export default {
       required: true
     }
   },
-  beforeMount(){
+  beforeMount() {
     this.fetchInfo();
   },
   methods: {
@@ -70,26 +62,26 @@ export default {
       const date = new Date(timestamp);
       const now = new Date();
       const diffInSeconds = Math.floor((now - date) / 1000);
-      
+
       if (diffInSeconds < 60) {
         return 'just now';
       }
-      
+
       const diffInMinutes = Math.floor(diffInSeconds / 60);
       if (diffInMinutes < 60) {
         return `${diffInMinutes}m ago`;
       }
-      
+
       const diffInHours = Math.floor(diffInMinutes / 60);
       if (diffInHours < 24) {
         return `${diffInHours}h ago`;
       }
-      
+
       const diffInDays = Math.floor(diffInHours / 24);
       if (diffInDays < 7) {
         return `${diffInDays}d ago`;
       }
-      
+
       return date.toLocaleDateString();
     };
 
@@ -101,13 +93,13 @@ export default {
     };
 
     const handleInitialMessages = (initialMessages) => {
-      if (!isTabActive.value) return; // Only process messages if tab is active
+      if (!isTabActive.value) return;
       messages.value = initialMessages.reverse();
       scrollToBottom();
     };
 
     const handleNewMessage = (message) => {
-      if (!isTabActive.value) return; // Only process messages if tab is active
+      if (!isTabActive.value) return;
       messages.value.push(message);
       scrollToBottom();
     };
@@ -131,33 +123,33 @@ export default {
     const handleVisibilityChange = () => {
       isTabActive.value = document.visibilityState === 'visible';
       console.log('Tab visibility changed:', isTabActive.value);
-      
+
       if (isTabActive.value) {
-        // Tab became visible, refresh the connection
+
         connectWebSocket();
       } else {
-        // Tab became hidden, disconnect
+
         console.log('Tab hidden, disconnecting from group:', props.groupId);
         groupWebSocket.disconnect();
       }
     };
 
     const connectWebSocket = () => {
-      // Clear existing messages when connecting to a new group
+
       messages.value = [];
-      
-      // Disconnect any existing connection
+
+
       groupWebSocket.disconnect();
-      
-      // Connect to the new group
+
+
       console.log('Connecting to group:', props.groupId);
       groupWebSocket.connect(props.groupId);
       groupWebSocket.onInitialMessages(handleInitialMessages);
       groupWebSocket.onMessage(handleNewMessage);
-     
+
     };
 
-    // Watch for group ID changes
+
     watch(() => props.groupId, (newGroupId, oldGroupId) => {
       if (newGroupId && newGroupId !== oldGroupId) {
         console.log('Group ID changed from', oldGroupId, 'to', newGroupId);
@@ -168,8 +160,8 @@ export default {
     onMounted(async () => {
       await fetchUserInfo();
       connectWebSocket();
-      
-      // Add visibility change listener
+
+
       document.addEventListener('visibilitychange', handleVisibilityChange);
     });
 
@@ -178,8 +170,8 @@ export default {
       groupWebSocket.disconnect();
       groupWebSocket.removeInitialHandler(handleInitialMessages);
       groupWebSocket.removeMessageHandler(handleNewMessage);
-      
-      // Remove visibility change listener
+
+
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     });
 
@@ -199,7 +191,7 @@ export default {
 .group-chat {
   display: flex;
   flex-direction: column;
-  height: 600px; /* Fixed height for the chat container */
+  height: 600px;
   background-color: #f5f5f5;
   border-radius: 8px;
   overflow: hidden;
@@ -209,7 +201,7 @@ export default {
   padding: 1rem;
   background-color: #4a90e2;
   color: white;
-  flex-shrink: 0; /* Prevent header from shrinking */
+  flex-shrink: 0;
 }
 
 .chat-header h2 {
@@ -224,7 +216,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  min-height: 0; /* Important for flex child to scroll */
+  min-height: 0;
 }
 
 .message {
@@ -233,7 +225,7 @@ export default {
   border-radius: 8px;
   background-color: white;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  word-wrap: break-word; /* Ensure long words don't overflow */
+  word-wrap: break-word;
 }
 
 .own-message {
@@ -264,7 +256,7 @@ export default {
 
 .message-content {
   word-break: break-word;
-  white-space: pre-wrap; /* Preserve line breaks and wrap text */
+  white-space: pre-wrap;
 }
 
 .message-input {
@@ -273,7 +265,7 @@ export default {
   padding: 1rem;
   background-color: white;
   border-top: 1px solid #e0e0e0;
-  flex-shrink: 0; /* Prevent input from shrinking */
+  flex-shrink: 0;
 }
 
 .message-input input {
@@ -332,4 +324,4 @@ export default {
 .unread-message:hover {
   background-color: #bbdefb;
 }
-</style> 
+</style>

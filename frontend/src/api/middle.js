@@ -1,6 +1,6 @@
 export async function CheckLogin() {
         try {
-          const response = await fetch('https://back-production-bb9b.up.railway.app/middle', {
+          const response = await fetch('http://20.56.138.63:8080/middle', {
             method: 'GET',
             credentials: 'include',
           });

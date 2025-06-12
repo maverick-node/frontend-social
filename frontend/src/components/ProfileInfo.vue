@@ -91,7 +91,13 @@
             </svg>
           </button>
           <div class="profile-image">
-            <img :src="user.avatar" alt="Profile Picture" />
+            <img
+              :src="user.avatar"
+              alt="Profile Picture"
+              @click="showFullImage(user.avatar)"
+              class="clickable-image"
+              style="cursor:pointer"
+            />
             <p class="username">@{{ user.username }}</p>
             <!-- Follow/Unfollow/Pending buttons -->
             <button v-if="!isOwner && user.follow_status === 'accepted'" @click="unfollow(user.username)"
@@ -164,7 +170,13 @@
           <div v-for="post in posts" :key="post.id" class="post">
             <div class="post-header">
               <div class="post-author">
-                <img :src="user.avatar" alt="Author Avatar" class="post-avatar" />
+                <img
+                  :src="user.avatar"
+                  alt="Author Avatar"
+                  class="post-avatar clickable-image"
+                  @click="showFullImage(user.avatar)"
+                  style="cursor:pointer"
+                />
                 <div class="post-author-info">
                   <h4>{{ post.title }}</h4>
                   <span class="post-author-name">{{ user.first_name }} {{ user.last_name }}</span>
@@ -174,8 +186,14 @@
             </div>
             <div class="post-content">
               <p>{{ post.content }}</p>
-              <img v-if="post.image" :src="'https://back-production-bb9b.up.railway.app/uploads/' + post.image" alt="Post Image"
-                class="post-image" />
+              <img
+                v-if="post.image"
+                :src="'http://20.56.138.63:8080/uploads/' + post.image"
+                alt="Post Image"
+                class="post-image clickable-image"
+                @click="showFullImage('http://20.56.138.63:8080/uploads/' + post.image)"
+                style="cursor:pointer"
+              />
             </div>
             <div v-if="post.comments_count > 0" class="post-actions">
               <button @click="toggleComments(post.id)">
@@ -194,8 +212,14 @@
                     </div>
                   </div>
                   <p class="comment-text">{{ comment.comment }}</p>
-                  <img v-if="comment.image" :src="'https://back-production-bb9b.up.railway.app/uploads/' + comment.image" alt="Comment Image"
-                    class="comment-image" />
+                  <img
+                    v-if="comment.image"
+                    :src="'http://20.56.138.63:8080/uploads/' + comment.image"
+                    alt="Comment Image"
+                    class="comment-image clickable-image"
+                    @click="showFullImage('http://20.56.138.63:8080/uploads/' + comment.image)"
+                    style="cursor:pointer"
+                  />
                 </li>
               </ul>
             </div>
@@ -211,6 +235,12 @@
         <p v-if="isPending">Your follow request is pending approval.</p>
         <p v-else>Follow this account to see their posts.</p>
       </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div v-if="showImageModal" class="image-modal" @click.self="closeImageModal">
+      <img :src="selectedImage" class="modal-image" />
+      <button class="close-modal-btn" @click="closeImageModal">&times;</button>
     </div>
   </div>
 </template>
@@ -253,10 +283,13 @@ export default {
         follow_status: ""
       },
       CurrentUsername: "",
+      imagePreview: null,
+      showImageModal: false,
+      selectedImage: null,
     };
   },
   beforeRouteEnter(to, from, next) {
-    fetch("https://back-production-bb9b.up.railway.app/api/info", {
+    fetch("http://20.56.138.63:8080/api/info", {
       method: "GET",
       credentials: "include",
     })
@@ -285,7 +318,7 @@ export default {
   },
   watch: {
     '$route'(to, from) {
-      // Handle route changes (when navigating between different profiles)
+      
       if (to.params.id !== from.params.id) {
         this.resetComponentState();
         this.initializeProfile(to.params.id);
@@ -306,6 +339,14 @@ export default {
     this.initializeProfile(userId, currentUserId);
   },
   methods: {
+    showFullImage(imageUrl) {
+      this.selectedImage = imageUrl;
+      this.showImageModal = true;
+    },
+    closeImageModal() {
+      this.showImageModal = false;
+      this.selectedImage = null;
+    },
     resetComponentState() {
       this.showFollowersList = false;
       this.showFollowingList = false;
@@ -333,17 +374,17 @@ export default {
     },
     async toggleComments(postId) {
       if (this.visibleCommentsPostId === postId) {
-        // If clicking the same post, hide comments
+        
         this.visibleCommentsPostId = null;
         this.Comments = [];
       } else {
-        // If clicking a different post, show its comments
+        
         this.visibleCommentsPostId = postId;
         await this.getComments(postId);
       }
     },
     getComments(postId) {
-      return fetch(`https://back-production-bb9b.up.railway.app/api/getcomments?post_id=${postId}`, {
+      return fetch(`http://20.56.138.63:8080/api/getcomments?post_id=${postId}`, {
         method: 'GET',
         credentials: 'include'
       })
@@ -359,7 +400,7 @@ export default {
             if (!comments[i].Avatar) {
               comments[i].Avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${comments[i].Author}`;
             } else {
-              comments[i].Avatar = 'https://back-production-bb9b.up.railway.app/uploads/' + comments[i].Avatar;
+              comments[i].Avatar = 'http://20.56.138.63:8080/uploads/' + comments[i].Avatar;
             }
           }
           this.Comments = comments || [];
@@ -372,7 +413,7 @@ export default {
     },
     async getData() {
       try {
-        const response = await fetch('https://back-production-bb9b.up.railway.app/api/info', {
+        const response = await fetch('http://20.56.138.63:8080/api/info', {
           method: 'GET',
           credentials: 'include',
         });
@@ -399,7 +440,7 @@ export default {
     checkIfFollowing() {
       if (!this.user.username) return;
 
-      fetch(`https://back-production-bb9b.up.railway.app/api/followers?action=isFollowing&profileUser=${this.user.username}`, {
+      fetch(`http://20.56.138.63:8080/api/followers?action=isFollowing&profileUser=${this.user.username}`, {
         method: "GET",
         credentials: "include"
       })
@@ -420,7 +461,7 @@ export default {
         .catch(error => {
           console.error("Error checking follow status:", error);
           this.$router.push('/404');
-          // Reset states on error
+          
           this.isFollowing = false;
           this.isPending = false;
         });
@@ -435,7 +476,7 @@ export default {
     },
 
     logout() {
-      fetch('https://back-production-bb9b.up.railway.app/api/auth/logout', {
+      fetch('http://20.56.138.63:8080/api/auth/logout', {
         method: 'POST',
         credentials: 'include'
       })
@@ -455,7 +496,7 @@ export default {
 
     async fetchuserData(id) {
       try {
-        const response = await fetch(`https://back-production-bb9b.up.railway.app/api/userinfo?user_id=${id}`, {
+        const response = await fetch(`http://20.56.138.63:8080/api/userinfo?user_id=${id}`, {
           method: "GET",
           credentials: "include"
         });
@@ -478,15 +519,15 @@ export default {
         if (!this.user.avatar) {
           this.user.avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.username}`;
         } else {
-          this.user.avatar = 'https://back-production-bb9b.up.railway.app/uploads/' + this.user.avatar;
+          this.user.avatar = 'http://20.56.138.63:8080/uploads/' + this.user.avatar;
         }
 
-        // Only fetch posts if user can view them
+        
         if (this.canViewPosts) {
           await this.fetchUserPosts(data.username);
         }
 
-        // Check follow status after user data is loaded
+        
         await this.checkIfFollowing();
 
       } catch (error) {
@@ -497,7 +538,7 @@ export default {
     },
 
     fetchUserPosts(username) {
-      fetch(`https://back-production-bb9b.up.railway.app/api/ownposts?username=${username}`, {
+      fetch(`http://20.56.138.63:8080/api/ownposts?username=${username}`, {
         method: "GET",
         credentials: "include"
       })
@@ -537,7 +578,7 @@ export default {
 
     async follow(profileUser) {
       try {
-        const response = await fetch(`https://back-production-bb9b.up.railway.app/api/followers?action=follow&profileUser=${profileUser}`, {
+        const response = await fetch(`http://20.56.138.63:8080/api/followers?action=follow&profileUser=${profileUser}`, {
           method: 'POST',
           credentials: 'include'
         });
@@ -546,10 +587,10 @@ export default {
           throw new Error('Follow failed');
         }
 
-        // Wait for the follow action to complete
+        
         await response.text();
 
-        // Update local state based on privacy
+        
         if (this.user.privacy === 'private') {
           this.isPending = true;
           this.isFollowing = false;
@@ -558,10 +599,10 @@ export default {
           this.isPending = false;
         }
 
-        // Wait for user data to be refreshed
+        
         await this.fetchuserData(this.user.username);
 
-        // Double check follow status after a short delay
+        
         setTimeout(() => {
           this.checkIfFollowing();
         }, 500);
@@ -575,7 +616,7 @@ export default {
 
     async unfollow(profileUser) {
       try {
-        const response = await fetch(`https://back-production-bb9b.up.railway.app/api/followers?action=unfollow&profileUser=${profileUser}`, {
+        const response = await fetch(`http://20.56.138.63:8080/api/followers?action=unfollow&profileUser=${profileUser}`, {
           method: 'POST',
           credentials: 'include'
         });
@@ -584,26 +625,26 @@ export default {
           throw new Error('Unfollow failed');
         }
 
-        // Reset states immediately
+        
         this.isFollowing = false;
         this.isPending = false;
 
-        // Wait for user data refresh
+        
         await this.fetchuserData(this.user.username);
 
-        // Clear posts if can't view anymore
+        
         if (!this.canViewPosts) {
           this.posts = [];
         }
 
-        // Double check status after a short delay
+        
         setTimeout(() => {
           this.checkIfFollowing();
         }, 300);
 
       } catch (err) {
         console.error('Unfollow error:', err);
-        // Keep current state on error
+        
       }
     },
 
@@ -620,7 +661,7 @@ export default {
     },
     async fetchNotifications() {
       try {
-        const res = await fetch('https://back-production-bb9b.up.railway.app/api/notifications', {
+        const res = await fetch('http://20.56.138.63:8080/api/notifications', {
           method: 'GET',
           credentials: 'include'
         });
@@ -642,14 +683,14 @@ export default {
       console.log(notificationId);
 
       try {
-        // Find the notification first
+        
         const notification = this.notifications.find(n => n.id === notificationId);
         if (!notification) return;
 
-        // Set a timeout to mark as read after 3 seconds
+        
         setTimeout(async () => {
           try {
-            const res = await fetch(`https://back-production-bb9b.up.railway.app/api/markasread`, {
+            const res = await fetch(`http://20.56.138.63:8080/api/markasread`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
@@ -663,13 +704,13 @@ export default {
             console.log("res", res);
             if (res.ok) {
               notification.is_read = true;
-              // Update unread count
+              
               this.unreadNotificationCount = this.notifications.filter(n => !n.is_read).length;
             }
           } catch (error) {
             console.error('Error marking notification as read:', error);
           }
-        }, 3000); // 3 seconds delay
+        }, 3000); 
       } catch (error) {
         console.error('Error marking notification as read:', error);
       }
@@ -699,29 +740,30 @@ export default {
       }
     },
     setupNotificationWebSocket() {
-      // Register handler for real-time notifications
+      
       notificationWebSocket.onNotification('profile-info', (notification) => {
         console.log('Received real-time notification:', notification);
         
-        // Refresh notifications and count from server to ensure accuracy
+        
         this.fetchNotifications();
       });
     },
   },
   mounted() {
-    // Set up notification WebSocket
+    
     this.setupNotificationWebSocket();
     
     this.fetchNotifications();
     document.addEventListener('click', this.handleNotifClose);
   },
   beforeUnmount() {
-    // Clean up notification WebSocket
+    
     notificationWebSocket.removeNotificationHandler('profile-info');
     document.removeEventListener('click', this.handleNotifClose);
   }
 };
 </script>
+
 <style scoped>
 /* Layout */
 .profile-layout {
@@ -1827,5 +1869,44 @@ export default {
     opacity: 1;
     transform: scale(1);
   }
+}
+
+.clickable-image {
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+.clickable-image:hover {
+  box-shadow: 0 0 0 3px #6366f1;
+}
+.image-modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(30, 32, 48, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.modal-image {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 1rem;
+  box-shadow: 0 8px 32px rgba(35,38,58,0.25);
+  background: #fff;
+}
+.close-modal-btn {
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  font-size: 2.5rem;
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  z-index: 10000;
+  transition: color 0.2s;
+}
+.close-modal-btn:hover {
+  color: #ef4444;
 }
 </style>
