@@ -114,7 +114,7 @@ export default {
     }
   },
   beforeRouteEnter(to, from, next) {
-        fetch("http://20.56.138.63:8080/api/info", {
+        fetch("http://social-net.duckdns.org/api/info", {
             method: "GET",
             credentials: "include",
         })
@@ -139,7 +139,7 @@ export default {
     this.fetchNotifications();
   },
   async created(){
-    const userRes = await fetch("http://20.56.138.63:8080/api/info", {
+    const userRes = await fetch("http://social-net.duckdns.org/api/info", {
       method: "GET",
       credentials: "include",
     });
@@ -160,7 +160,7 @@ export default {
     },
     async fetchMyGroups() {
       try {
-        const response = await fetch('http://20.56.138.63:8080/api/mygroups', {
+        const response = await fetch('http://social-net.duckdns.org/api/mygroups', {
           credentials: 'include'
         });
         if (response.ok) {
@@ -172,7 +172,7 @@ export default {
     },
     async fetchPendingInvitations(groupId) {
       try {
-        const response = await fetch(`http://20.56.138.63:8080/api/GetInvitations?group_id=${groupId}`, {
+        const response = await fetch(`http://social-net.duckdns.org/api/GetInvitations?group_id=${groupId}`, {
           credentials: 'include'
         });
         if (response.ok) {
@@ -206,7 +206,7 @@ export default {
       this.$router.push(`/profile/${this.user.name}`);
     },
     logout() {
-      fetch('http://20.56.138.63:8080/api/logout', {
+      fetch('http://social-net.duckdns.org/api/logout', {
         method: 'POST',
         credentials: 'include'
       })
@@ -229,8 +229,8 @@ export default {
     async handleInvitation(groupId, userId, action) {
       try {
         const endpoint = action === 'accept' 
-          ? 'http://20.56.138.63:8080/api/acceptgroupmember'
-          : 'http://20.56.138.63:8080/api/removememberfromgroup';
+          ? 'http://social-net.duckdns.org/api/acceptgroupmember'
+          : 'http://social-net.duckdns.org/api/removememberfromgroup';
         const response = await fetch(endpoint, {
           method: 'POST',
           credentials: 'include',
@@ -254,7 +254,7 @@ export default {
     async leaveGroup(groupId) {
       try {
         
-        const userRes = await fetch("http://20.56.138.63:8080/api/info", {
+        const userRes = await fetch("http://social-net.duckdns.org/api/info", {
           method: "GET",
           credentials: "include",
         });
@@ -266,7 +266,7 @@ export default {
         
         const userData = await userRes.json();
         
-        const response = await fetch("http://20.56.138.63:8080/api/removememberfromgroup", {
+        const response = await fetch("http://social-net.duckdns.org/api/removememberfromgroup", {
           method: "POST",
           credentials: "include",
           headers: {
@@ -298,7 +298,7 @@ export default {
     },
     async fetchNotifications() {
       try {
-        const res = await fetch('http://20.56.138.63:8080/api/notifications', {
+        const res = await fetch('http://social-net.duckdns.org/api/notifications', {
           method: 'GET',
           credentials: 'include'
         });
@@ -325,7 +325,7 @@ export default {
 
         setTimeout(async () => {
           try {
-            const res = await fetch(`http://20.56.138.63:8080/api/markasread`, {
+            const res = await fetch(`http://social-net.duckdns.org/api/markasread`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
