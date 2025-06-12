@@ -179,7 +179,7 @@ export default {
       
       const userJson = JSON.stringify(this.form);
       formData.append("user", userJson);
-      fetch("https://5512-20-56-138-63.ngrok-free.app/api/auth/register", {
+      fetch("http://20.56.138.63:8080/api/auth/register", {
         method: "POST",
         credentials: "include",
         body: formData,
