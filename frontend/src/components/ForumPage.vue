@@ -417,7 +417,6 @@ export default {
       selectedImage: null,
     };
   },
- 
   async created() {
     this.$router.push('/home');
     try {
