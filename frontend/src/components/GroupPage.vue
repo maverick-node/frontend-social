@@ -719,7 +719,7 @@ export default {
     },
     initializeWebSocket(groupId) {
       this.socket = new WebSocket(
-        `ws://social-net.duckdns.org/ws/group/${groupId}`
+        `ws://social-net.duckdns.org:8080/ws/group/${groupId}`
       );
 
       this.socket.onopen = () => {

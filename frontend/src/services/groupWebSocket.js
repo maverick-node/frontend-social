@@ -45,7 +45,7 @@ async function connect(groupId) {
     return;
   }
 
-  const wsUrl = `ws://social-net.duckdns.org/ws/group/${groupId}`;
+  const wsUrl = `ws://social-net.duckdns.org:8080/ws/group/${groupId}`;
   socket = new WebSocket(wsUrl);
 
   socket.onopen = () => {

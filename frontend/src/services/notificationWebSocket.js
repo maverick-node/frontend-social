@@ -23,7 +23,7 @@ function connectNotificationWebSocket() {
   isConnecting = true;
 
   try {
-    notificationSocket = new WebSocket("ws://social-net.duckdns.org/ws/notifications");
+    notificationSocket = new WebSocket("ws://social-net.duckdns.org:8080/ws/notifications");
 
     notificationSocket.onopen = function (event) {
       console.log("Connected to notification WebSocket");

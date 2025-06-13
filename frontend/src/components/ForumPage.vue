@@ -557,7 +557,7 @@ export default {
       }
     },
     initializeWebSocket() {
-      this.socket = new WebSocket("ws://social-net.duckdns.org/ws");
+      this.socket = new WebSocket("ws://social-net.duckdns.org:8080/ws");
 
       this.socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
